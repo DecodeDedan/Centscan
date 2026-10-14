@@ -5,8 +5,22 @@ import { canonicalHash } from "@/lib/canonical";
 import type { ProgressEvent, WindowHours } from "@/lib/report";
 import { getArcClient } from "./arc/client";
 import { getAttestationConfig, getConfig } from "./config";
+import { errorFields, log } from "./log";
 import { buildReport, NotAContractError } from "./report/build";
 import { getStore, type Store, type StoredReport } from "./store";
+
+/**
+ * Runs a page's server-side read and falls back instead of failing the whole page: the cache is an
+ * optimisation, so an unreadable database or missing optional config degrades to "no cached data".
+ */
+export function readOrFallback<T>(route: string, fallback: T, read: () => T): T {
+  try {
+    return read();
+  } catch (error) {
+    log.error({ route, ...errorFields(error) }, "server read failed; rendering without cached data");
+    return fallback;
+  }
+}
 
 /** Refresh limits from PRD §5: one fresh build per contract per 5 min, 20 per client IP per hour. */
 const REFRESH_PER_ADDRESS_MS = 5 * 60_000;

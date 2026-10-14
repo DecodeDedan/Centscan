@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { scanExamples } from "@/components/examples";
 import { ReportClient } from "@/components/ReportClient";
 import { parseWindowHours } from "@/lib/report";
-import { getAttestationInfo, getCachedReport, getRecentReports, parseAddressParam } from "@/server/service";
+import { getAttestationInfo, getCachedReport, getRecentReports, parseAddressParam, readOrFallback } from "@/server/service";
 import { InvalidState } from "./InvalidState";
 
 export const dynamic = "force-dynamic";
@@ -52,10 +52,10 @@ export default async function ReportPage({ params, searchParams }: Props) {
     return <InvalidState title="Unsupported window" message="Choose a window of 1 h, 24 h or 7 d." detail={null} />;
   }
 
-  const initial = getCachedReport(address, hours);
-  const attestationInfo = getAttestationInfo();
+  const initial = readOrFallback("/c", null, () => getCachedReport(address, hours));
+  const attestationInfo = readOrFallback("/c", null, () => getAttestationInfo());
   // Offered when the address turns out not to be a contract; never includes the address that just failed.
-  const examples = scanExamples(getRecentReports(EXAMPLE_SOURCE_LIMIT)).filter((e) => e.address !== address);
+  const examples = scanExamples(readOrFallback("/c", [], () => getRecentReports(EXAMPLE_SOURCE_LIMIT))).filter((e) => e.address !== address);
 
   return (
     <ReportClient key={`${address}-${hours}`} address={address} hours={hours} initial={initial} attestationInfo={attestationInfo} examples={examples} />

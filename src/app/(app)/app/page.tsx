@@ -8,7 +8,7 @@ import ui from "@/components/ui.module.css";
 import { activityLabel, sourceLabel, windowLabel } from "@/components/verdicts";
 import type { ReportPayload } from "@/lib/api";
 import { formatMicroUsd } from "@/lib/format";
-import { getRecentReports } from "@/server/service";
+import { getRecentReports, readOrFallback } from "@/server/service";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ function ledgerRows(recent: readonly ReportPayload[], now: number): LedgerRow[] 
 }
 
 export default function ScannerPage() {
-  const recent = getRecentReports(RECENT_LIMIT);
+  const recent = readOrFallback("/app", [], () => getRecentReports(RECENT_LIMIT));
   // Server component rendered per request: one clock reading for every row.
   // eslint-disable-next-line react-hooks/purity -- force-dynamic server render, never re-rendered on the client
   const now = Date.now();

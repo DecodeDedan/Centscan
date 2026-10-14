@@ -73,7 +73,16 @@ describe("getConfig", () => {
 
   it("lists every problem in one error", () => {
     // Act
-    const run = (): unknown => configFrom({ ARC_CHAIN_ID: "1", DATABASE_PATH: "", REGISTRY_ADDRESS: "0x123", MAX_TXS_PER_REPORT: "5" });
+    // Public endpoints have defaults now, so they are given invalid values to prove they are still validated.
+    const run = (): unknown =>
+      configFrom({
+        ARC_RPC_URL: "not-a-url",
+        ARC_CHAIN_ID: "1",
+        SOURCIFY_URL: "nope",
+        SIGNATURE_DB_URL: "nope",
+        REGISTRY_ADDRESS: "0x123",
+        MAX_TXS_PER_REPORT: "5",
+      });
 
     // Assert
     expect(run).toThrow(/^Invalid configuration: /);
@@ -85,7 +94,7 @@ describe("getConfig", () => {
         return (error as Error).message;
       }
     })();
-    for (const field of ["ARC_RPC_URL", "ARC_CHAIN_ID", "DATABASE_PATH", "SOURCIFY_URL", "SIGNATURE_DB_URL", "REGISTRY_ADDRESS", "MAX_TXS_PER_REPORT"]) {
+    for (const field of ["ARC_RPC_URL", "ARC_CHAIN_ID", "SOURCIFY_URL", "SIGNATURE_DB_URL", "REGISTRY_ADDRESS", "MAX_TXS_PER_REPORT"]) {
       expect(message).toContain(`${field}:`);
     }
     expect(message).toContain("must be 5042 (Arc mainnet)");
