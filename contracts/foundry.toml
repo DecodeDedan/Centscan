@@ -1,0 +1,12 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.30"
+optimizer = true
+optimizer_runs = 10000
+bytecode_hash = "ipfs"
+cbor_metadata = true
+
+[rpc_endpoints]
+arc = "${ARC_RPC_URL}"

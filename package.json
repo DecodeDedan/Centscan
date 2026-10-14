@@ -1,0 +1,50 @@
+{
+  "name": "centscan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Every Arc contract, priced to the cent.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:contracts": "cd contracts && arc-forge test",
+    "record-fixtures": "tsx scripts/record-fixtures.ts",
+    "report": "tsx scripts/report.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "framer-motion": "14.1.1",
+    "gsap": "3.15.0",
+    "next": "16.4.0",
+    "pino": "10.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.1",
+    "viem": "2.57.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "24",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19",
+    "@types/three": "0.186.0",
+    "@vitest/coverage-v8": "5.0.4",
+    "eslint": "9",
+    "eslint-config-next": "16.4.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.4"
+  }
+}

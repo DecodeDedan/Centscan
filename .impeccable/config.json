@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "brand/brand-sheet.html"
+        ],
+        "createdAt": "2026-10-13T09:51:27.693Z",
+        "reason": "Claude decided: #FAF8F3 receipt-paper surface is the brand's core concept (the receipt pattern, brand/BRAND.md Colour), not a reflex default"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+
+# env and secrets
+.env
+.env.*
+!.env.example
+
+# local data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# contracts build output
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+
+# local tool state
+.claude-flow/
+.impeccable/hook.cache.json
+.DS_Store

@@ -1,0 +1,220 @@
+/* Wide screens: the instrument on the left, the ledger it fills on the right. */
+.page {
+  display: grid;
+  gap: var(--space-12);
+  min-inline-size: 0;
+}
+
+@media (min-width: 64em) {
+  .page {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: start;
+    column-gap: var(--space-12);
+  }
+}
+
+.scan,
+.side {
+  display: grid;
+  align-content: start;
+  gap: var(--space-8);
+  min-inline-size: 0;
+}
+
+.titleBlock {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.title {
+  font-size: var(--text-5xl);
+  line-height: 0.95;
+  letter-spacing: var(--tracking-5xl);
+  max-inline-size: 12ch;
+}
+
+.lead {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--text-muted);
+  max-inline-size: 46ch;
+}
+
+/* The instrument panel: the one framed object on the page. */
+.panel {
+  min-inline-size: 0;
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-block-start: 3px solid var(--text);
+}
+
+@media (max-width: 30em) {
+  .panel {
+    padding: var(--space-5) var(--space-4);
+  }
+}
+
+.recent {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.recentHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-6);
+}
+
+.empty {
+  padding-block: var(--space-8);
+  border-block: 2px solid var(--text);
+  color: var(--text-muted);
+}
+
+.scroll {
+  overflow-x: auto;
+  border-block: 2px solid var(--text);
+  overscroll-behavior-inline: contain;
+}
+
+.ledger {
+  inline-size: 100%;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.ledger th,
+.ledger td {
+  padding: var(--space-3);
+  text-align: start;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.ledger th:first-child,
+.ledger td:first-child {
+  padding-inline-start: 0;
+}
+
+.ledger th:last-child,
+.ledger td:last-child {
+  padding-inline-end: 0;
+}
+
+.ledger thead th,
+.ledger thead .num {
+  font-family: var(--font-text);
+}
+
+.ledger thead th {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  border-block-end: 1px solid var(--text);
+}
+
+.ledger tbody th {
+  font-weight: 400;
+}
+
+.ledger tbody tr + tr > * {
+  border-block-start: 1px solid var(--divider);
+}
+
+.ledger tbody tr:hover > * {
+  background: var(--control);
+}
+
+.ledger .num {
+  text-align: end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.contract {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Blank ruled lines below the entries, like an open ledger book. */
+.ledger .blank td {
+  block-size: calc(var(--text-xl) * var(--leading-xl) + var(--space-6));
+}
+
+.ledger tbody tr.blank:hover > * {
+  background: transparent;
+}
+
+.none {
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* The price is the hero of every row. */
+.ledger .cost {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Manual figure: the formula with hairline glosses under each term. */
+.formula {
+  display: grid;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--text);
+}
+
+.terms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.term {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.symbol {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  padding-block-end: var(--space-1);
+  border-block-end: 1px solid var(--border-strong);
+}
+
+.result {
+  color: var(--accent);
+  font-weight: 600;
+  border-block-end-color: var(--accent);
+}
+
+.gloss {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-muted);
+}
+
+.op {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+}
+
+.figcaption {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-inline-size: 60ch;
+}
+
+.figcaption > span {
+  margin-inline-end: var(--space-2);
+}

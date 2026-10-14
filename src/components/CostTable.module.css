@@ -1,0 +1,136 @@
+.section {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+/* The table scrolls inside its own frame; the page never scrolls sideways. */
+.scroll {
+  overflow-x: auto;
+  margin-block-start: var(--space-2);
+  border-block: 2px solid var(--text);
+  overscroll-behavior-inline: contain;
+}
+
+.table {
+  inline-size: 100%;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-2);
+  text-align: start;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.table thead th,
+.table thead .num {
+  font-family: var(--font-text);
+}
+
+.table thead th {
+  font-weight: 600;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-muted);
+  border-block-end: 1px solid var(--text);
+}
+
+.table tbody tr + tr > * {
+  border-block-start: 1px solid var(--divider);
+}
+
+.table tbody tr:hover > * {
+  background: var(--control);
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-inline-start: 0;
+}
+
+.table .num {
+  text-align: end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.table .fn {
+  font-weight: 400;
+  white-space: normal;
+  min-inline-size: 20ch;
+}
+
+.fnName {
+  display: block;
+  max-inline-size: 28ch;
+  font-family: var(--font-mono);
+  overflow-wrap: break-word;
+}
+
+.sub {
+  display: block;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.table .median {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--accent-text);
+}
+
+/* Share of calls against the busiest function: a hairline meter, not a chart. */
+.meter {
+  display: block;
+  margin-block-start: var(--space-1);
+  margin-inline-start: auto;
+  inline-size: 8ch;
+  block-size: var(--space-1);
+  background: var(--control-active);
+}
+
+.meterFill {
+  display: block;
+  block-size: 100%;
+  margin-inline-start: auto;
+  background: var(--accent-border);
+}
+
+.tx {
+  font-family: var(--font-mono);
+}
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding-block: var(--space-6);
+  border-block: 2px solid var(--text);
+}
+
+.emptyTitle {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.reverted {
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 40em) {
+  .table .fn {
+    min-inline-size: 14ch;
+  }
+
+  .fnName {
+    max-inline-size: 18ch;
+  }
+}

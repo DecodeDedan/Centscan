@@ -1,0 +1,152 @@
+.page {
+  display: grid;
+  gap: var(--space-8);
+  min-inline-size: 0;
+}
+
+/* Header row: what was scanned on the left, how (window, refresh) on the right. */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding-block-end: var(--space-5);
+  border-block-end: 1px solid var(--text);
+}
+
+.ident {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  flex: 1 1 32ch;
+}
+
+.address {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  text-wrap: wrap;
+}
+
+.identActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.explorer {
+  font-weight: 600;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.refresh {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+.refreshButton {
+  min-inline-size: 12ch;
+}
+
+/* Phones: receipt, table, panels in flow. Desktop: receipt beside the data. Wide: three zones, receipt | table | panels. */
+.body {
+  display: grid;
+  gap: var(--space-10);
+  min-inline-size: 0;
+}
+
+.receiptCol,
+.tableCol,
+.panelCol {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.fig {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  display: flex;
+  gap: var(--space-3);
+}
+
+.proof {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+@media (min-width: 64em) {
+  .body {
+    grid-template-columns: minmax(34ch, 4fr) minmax(0, 7fr);
+    align-items: start;
+    gap: var(--space-10) var(--space-8);
+  }
+
+  .receiptCol {
+    grid-row: span 2;
+    position: sticky;
+    inset-block-start: var(--space-4);
+  }
+
+  .panelCol {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 90em) {
+  .body {
+    grid-template-columns: minmax(32ch, 3fr) minmax(0, 6.5fr) minmax(30ch, 3fr);
+  }
+
+  .receiptCol {
+    grid-row: auto;
+  }
+
+  .panelCol {
+    grid-column: 3;
+    position: sticky;
+    inset-block-start: var(--space-4);
+  }
+}
+
+.error {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  max-inline-size: var(--measure);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-block-start: 3px solid var(--danger);
+}
+
+.errorTitle {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+}
+
+.errorText {
+  max-inline-size: var(--measure);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-2);
+}

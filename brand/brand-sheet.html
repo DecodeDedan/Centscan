@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centscan Brand Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAF8F3; --stone-100: #F2EFE8; --stone-200: #E3DED3; --stone-300: #C9C2B4;
+    --stone-500: #8A8375; --stone-600: #5C574D; --stone-800: #2E2B26; --ink: #14201C;
+    --green: #0B6E4F; --green-on-ink: #3FBF8F; --amber: #B45309; --red: #B42318;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 48px 16px 96px; }
+  h1 { font-size: 40px; line-height: 1.1; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-size: 24px; font-weight: 600; margin: 56px 0 16px; padding-top: 16px; border-top: 1px solid var(--stone-300); }
+  p.lede { color: var(--stone-600); font-size: 18px; margin: 0; max-width: 60ch; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .tile { margin: 0; border: 1px solid var(--stone-300); border-radius: var(--radius); padding: 24px; background: #fff; display: grid; place-items: center; min-height: 160px; }
+  .tile.dark { background: var(--ink); border-color: var(--ink); }
+  .tile img { max-width: 100%; height: auto; }
+  .cap { font-size: 13px; color: var(--stone-600); margin-top: 8px; }
+  .swatches { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .sw { border: 1px solid var(--stone-300); border-radius: var(--radius); overflow: hidden; background: #fff; }
+  .sw div { height: 72px; }
+  .sw p { margin: 0; padding: 8px 12px; font-size: 13px; }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
+  .type p { margin: 0 0 12px; }
+  .receipt { max-width: 420px; background: #fff; border: 1px solid var(--stone-300); border-radius: var(--radius); padding: 24px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; }
+  .row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; border-bottom: 1px dashed var(--stone-300); }
+  .row:last-child { border-bottom: 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font: 600 13px "IBM Plex Sans", sans-serif; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+  .pass { color: var(--green); } .warn { color: var(--amber); } .fail { color: var(--red); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Centscan</h1>
+  <p class="lede">Every Arc contract, priced to the cent. Brand reference for the logo, colour, type and core UI patterns.</p>
+
+  <h2>Logo</h2>
+  <div class="grid">
+    <figure class="tile"><img src="centscan-logo.svg" alt="Centscan logo"></figure>
+    <figure class="tile"><img src="centscan-logo-tagline.svg" alt="Centscan logo with tagline"></figure>
+    <figure class="tile dark"><img src="centscan-logo-tagline-dark.svg" alt="Centscan logo with tagline, dark"></figure>
+    <figure class="tile"><img src="centscan-mark.svg" width="96" height="96" alt="Centscan mark"></figure>
+    <figure class="tile dark"><img src="centscan-mark-dark.svg" width="96" height="96" alt="Centscan mark, dark"></figure>
+    <figure class="tile"><img src="badge-example.svg" alt="Centscan README badge example"></figure>
+  </div>
+  <p class="cap">The mark is an open arc crossed by a bar: a cent sign. The arc is the C of “cent” and a nod to Arc; the square node on the bar is the reading point of the scan.</p>
+
+  <h2>Colour</h2>
+  <div class="swatches">
+    <div class="sw"><div style="background:var(--paper)"></div><p>Paper<br><code>#FAF8F3</code></p></div>
+    <div class="sw"><div style="background:var(--ink)"></div><p>Ink<br><code>#14201C</code></p></div>
+    <div class="sw"><div style="background:var(--green)"></div><p>Ledger green<br><code>#0B6E4F</code></p></div>
+    <div class="sw"><div style="background:var(--green-on-ink)"></div><p>Green on ink<br><code>#3FBF8F</code></p></div>
+    <div class="sw"><div style="background:var(--amber)"></div><p>Signal amber<br><code>#B45309</code></p></div>
+    <div class="sw"><div style="background:var(--red)"></div><p>Fail red<br><code>#B42318</code></p></div>
+    <div class="sw"><div style="background:var(--stone-100)"></div><p>Stone 100<br><code>#F2EFE8</code></p></div>
+    <div class="sw"><div style="background:var(--stone-300)"></div><p>Stone 300<br><code>#C9C2B4</code></p></div>
+    <div class="sw"><div style="background:var(--stone-500)"></div><p>Stone 500<br><code>#8A8375</code></p></div>
+    <div class="sw"><div style="background:var(--stone-600)"></div><p>Stone 600<br><code>#5C574D</code></p></div>
+  </div>
+
+  <h2>Type</h2>
+  <div class="type">
+    <p style="font-size:40px;font-weight:600;line-height:1.1">0.042¢ per transfer</p>
+    <p style="font-size:24px;font-weight:600">Display 40 · Heading 24 — Plex Sans SemiBold</p>
+    <p style="font-size:16px">Body 16 — Plex Sans Regular. Plain sentences, real numbers, no hype.</p>
+    <p style="font-size:13px;color:var(--stone-600)">Caption 13 — Stone 600</p>
+    <p><code>0x3600…0000 · transfer(address,uint256) · 52,104 gas</code> — Plex Mono for data</p>
+  </div>
+
+  <h2>Core pattern: the receipt</h2>
+  <div class="receipt" aria-label="Example Centscan report receipt">
+    <div class="row"><span>Source</span><span class="pill pass">✓ Verified</span></div>
+    <div class="row"><span>Activity</span><span class="pill pass">✓ Live · 41 calls / 24h</span></div>
+    <div class="row"><span>Events</span><span class="pill warn">! Partial coverage</span></div>
+    <div class="row"><span>transfer()</span><span>0.104¢</span></div>
+    <div class="row"><span>approve()</span><span>0.093¢</span></div>
+    <div class="row"><span>Attested</span><span>block 25,732,344</span></div>
+  </div>
+  <p class="cap">Status always pairs an icon and a word with its colour, never colour alone. The amounts above are illustrative only.</p>
+</main>
+</body>
+</html>

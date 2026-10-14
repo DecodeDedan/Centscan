@@ -1,0 +1,213 @@
+/* The receipt: a paper object fed out of a printer slot. Two inks only: ink and ledger green. */
+
+.unit {
+  position: relative;
+  min-inline-size: 0;
+}
+
+/* The printer slot the paper leaves through. */
+.slot {
+  position: relative;
+  z-index: 1;
+  block-size: var(--space-3);
+  background: var(--text);
+  border-radius: var(--radius-full);
+}
+
+.paper {
+  position: relative;
+  margin-inline: var(--space-3);
+  margin-block-start: calc(var(--space-2) * -1);
+  padding: var(--space-8) var(--space-5) var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-block-start: 0;
+  border-block-end: 1px dashed var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.head {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-block-end: var(--space-4);
+  border-block-end: 1px dashed var(--border-strong);
+  text-align: center;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-xl);
+  letter-spacing: var(--tracking-xl);
+}
+
+.store {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+.lines {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-4);
+}
+
+/* term ........ value — the dotted leader is the term's own trailing rule. */
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.line dt {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.line dt::after {
+  content: "";
+  flex: 1 1 var(--space-4);
+  min-inline-size: var(--space-4);
+  border-block-end: 1px dotted var(--border-strong);
+}
+
+.line dd {
+  flex: 0 1 auto;
+  max-inline-size: 70%;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+.fix {
+  display: block;
+  font-family: var(--font-text);
+  font-size: var(--text-xs);
+}
+
+.dim {
+  color: var(--text-muted);
+}
+
+/* The total line: where the two inks overprint. */
+.total {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-4);
+  border-block: 2px solid var(--text);
+}
+
+.totalRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.totalTerm {
+  font-family: var(--font-text);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+/* The price is the hero of every receipt: mono 600 at display size. */
+.totalValue {
+  font-size: var(--text-4xl);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+
+.totalSub {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+/* Rubber stamp: green ink overprinting black, so it multiplies instead of covering. */
+.stamp {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-end: calc(var(--space-2) * -1);
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 3px double var(--accent);
+  border-radius: var(--radius-lg);
+  color: var(--accent);
+  mix-blend-mode: multiply;
+  text-decoration: none;
+  line-height: 1.2;
+  transform-origin: center;
+}
+
+.stamp:hover {
+  color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.stampWord {
+  font-family: var(--font-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stampMeta {
+  font-size: var(--text-xs);
+}
+
+.notes {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-4) 0;
+  margin: 0;
+  padding-inline: 0;
+  list-style: none;
+}
+
+.note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--warning-subtle);
+  border-inline-start: 2px solid var(--warning);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+.noteIcon {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.foot {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+}
+
+.signoff {
+  padding-block-start: var(--space-3);
+  border-block-start: 1px dashed var(--border-strong);
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

@@ -1,0 +1,201 @@
+/* Primitives shared by the scanner: buttons, status tones, figure headings, the segmented control. */
+
+/* Buttons (also applied to <a> for link-buttons) */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height);
+  padding-inline: var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-text);
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a.button {
+  transition: transform var(--duration-instant) var(--ease-out);
+}
+
+a.button:active {
+  transform: scale(0.96);
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-fg);
+}
+
+.secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--control-hover);
+  color: var(--text);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--accent-text);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--control);
+  color: var(--accent-hover);
+}
+
+.button:disabled {
+  background: var(--control);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.compact {
+  min-block-size: var(--space-8);
+  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Copy affordance */
+.copy {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.status {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* Status tones: the icon and word carry the meaning, colour only reinforces it. */
+.pass {
+  color: var(--success);
+}
+
+.warn {
+  color: var(--warning);
+}
+
+.fail {
+  color: var(--danger);
+}
+
+.unknown {
+  color: var(--text-muted);
+}
+
+/* Manual-style figure heading: "Fig. 2  Cost per function" */
+.figHeading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  letter-spacing: var(--tracking-2xl);
+}
+
+.figNo {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.caption {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-muted);
+  max-inline-size: var(--measure);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Segmented control: radio group (form) or link group (navigation). The ink chip slides between segments. */
+.segmented {
+  display: inline-flex;
+  padding: var(--space-1);
+  gap: var(--space-1);
+  background: var(--control);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  min-inline-size: 0;
+}
+
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: calc(var(--control-height) - var(--space-2) - 2px);
+  min-inline-size: 6ch;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.segment:hover {
+  color: var(--text);
+  background: var(--control-hover);
+}
+
+.segmentSelected,
+.segmentSelected:hover {
+  color: var(--page);
+  background: transparent;
+}
+
+.segmentLabel {
+  position: relative;
+  z-index: 1;
+}
+
+.segmentChip {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--text);
+  border-radius: var(--radius-sm);
+}
+
+/* The native radio covers its segment, so the hit area, keyboard arrows and focus ring are the browser's own. */
+.segmentInput {
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}

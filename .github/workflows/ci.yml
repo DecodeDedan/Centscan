@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Public, non-secret values from .env.example. REGISTRY/ATTESTER stay empty: attestation is disabled.
+      ARC_RPC_URL: https://rpc.mainnet.arc.io
+      ARC_CHAIN_ID: "5042"
+      SOURCIFY_URL: https://sourcify.dev/server
+      SIGNATURE_DB_URL: https://api.openchain.xyz/signature-database/v1
+      RPC_MAX_CALLS_PER_SECOND: "10"
+      RPC_BURST: "25"
+      SCAN_FALLBACK_BLOCKS: "10000"
+      MAX_TXS_PER_REPORT: "150"
+      LOG_LEVEL: info
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # version comes from package.json "packageManager"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      # The runner context is not available in job-level env, so DATABASE_PATH is exported here.
+      - name: Point DATABASE_PATH at runner temp
+        run: |
+          mkdir -p "$RUNNER_TEMP/centscan"
+          echo "DATABASE_PATH=$RUNNER_TEMP/centscan/centscan.db" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ARC_FOUNDRY_VERSION: v0.8.0-2
+      ARC_FOUNDRY_TARGET: x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      # Install as documented at https://docs.arc.io/arc/tutorials/install-arc-foundry:
+      # download the release tarball, extract, rename forge/cast/anvil to arc-*. Pinned and checksum-verified.
+      - name: Install Arc Foundry
+        run: |
+          set -euo pipefail
+          asset="arc-foundry-${ARC_FOUNDRY_VERSION}-${ARC_FOUNDRY_TARGET}.tar.gz"
+          base="https://github.com/circlefin/arc-foundry/releases/download/${ARC_FOUNDRY_VERSION}"
+          cd "$RUNNER_TEMP"
+          curl -fsSL --retry 3 -o "$asset" "$base/$asset"
+          curl -fsSL --retry 3 -o "$asset.sha256" "$base/$asset.sha256"
+          sha256sum -c "$asset.sha256"
+          tar -xzf "$asset"
+          mkdir -p "$HOME/.local/bin"
+          mv forge "$HOME/.local/bin/arc-forge"
+          mv cast "$HOME/.local/bin/arc-cast"
+          mv anvil "$HOME/.local/bin/arc-anvil"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: arc-forge --version
+      - working-directory: contracts
+        run: arc-forge build
+      - working-directory: contracts
+        run: arc-forge test -vv
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t centscan .

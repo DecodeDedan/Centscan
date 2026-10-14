@@ -1,0 +1,110 @@
+.form {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.label,
+.legend {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* The instrument's input: one ink frame holding the field and its digit readout. */
+.instrument {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding-inline-end: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-block-end-color: var(--text);
+  border-radius: var(--radius-md);
+}
+
+.instrument:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-color: var(--text);
+}
+
+.instrument[data-invalid] {
+  border-color: var(--danger);
+}
+
+.input {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.readout {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.fieldset {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+}
+
+.submit {
+  min-inline-size: 18ch;
+}
+
+@media (max-width: 30em) {
+  .input {
+    font-size: var(--text-base);
+    padding-inline: var(--space-3);
+  }
+
+  .submit {
+    flex: 1 1 100%;
+  }
+}
