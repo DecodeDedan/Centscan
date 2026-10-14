@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 /** Shell shared by the marketing site, (site), and the scanner, (app); each group renders its own chrome. */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}`}>
+    <html lang="en" data-theme="dark" className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}`}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content

@@ -22,3 +22,10 @@ export const MAGNET_PX = 6;
 export const indicatorSpring: Transition = { type: "spring", stiffness: 500, damping: 40 };
 
 export const printLine = (index: number): Transition => ({ duration: duration.fast, ease: easeOut, delay: index * PRINT_STAGGER_S });
+
+/** The house spring every Framer animation in the app inherits through MotionConfig. */
+export const houseSpring: Transition = { type: "spring", stiffness: 380, damping: 32, mass: 0.9 };
+/** Overdamped (damping ratio ≈ 1.8): money counts up and lands without overshooting its real value. */
+export const countSpring: Transition = { type: "spring", stiffness: 120, damping: 40, mass: 1 };
+/** Rows of the cost chart and the ledger arrive one after another. */
+export const ROW_STAGGER_S = 0.04;

@@ -1,116 +1,103 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import type { ProgressEvent, ProgressStep } from "@/lib/report";
-import { duration, easeOut } from "./motion";
-import r from "./Receipt.module.css";
+import { AnimatePresence, motion } from "framer-motion";
+import { formatInt } from "@/lib/format";
+import { STAGE_LABELS, queuedSteps, stageSeconds, type StageState } from "./pipelineStages";
 import styles from "./ReportProgress.module.css";
 import ui from "./ui.module.css";
+import { useNow } from "./useNow";
 import { windowLabel } from "./verdicts";
 
-const STEP_LABELS: Record<ProgressStep, string> = {
-  code: "Reading code",
-  source: "Checking Sourcify",
-  logs: "Collecting logs",
-  transactions: "Fetching transactions",
-  blocks: "Scanning blocks",
-  names: "Naming functions",
-};
+const STEP_UNITS: Partial<Record<StageState["step"], string>> = { logs: "pages", transactions: "receipts", blocks: "blocks" };
 
-const STEP_UNITS: Partial<Record<ProgressStep, string>> = { logs: "page " };
-
-export function isProgressStep(value: unknown): value is ProgressStep {
-  return typeof value === "string" && value in STEP_LABELS;
+function countText(stage: StageState): string | null {
+  if (stage.total <= 1) return null;
+  const unit = STEP_UNITS[stage.step];
+  return `${formatInt(stage.done)}/${formatInt(stage.total)}${unit ? ` ${unit}` : ""}`;
 }
 
-/** Widths of the unprinted lines, so the skeleton has the receipt's ragged shape. */
-const FEED_WIDTHS = ["92%", "70%", "84%", "60%", "88%", "76%"] as const;
-
-function StepLine({ step, isLast }: { step: ProgressEvent; isLast: boolean }) {
-  const reduceMotion = useReducedMotion();
-  // Steps can overlap (Sourcify runs beside log collection), so a step is finished only when it says so.
-  const active = step.done < step.total || (step.total === 0 && isLast);
-  const count = step.total > 1 ? `${STEP_UNITS[step.step] ?? ""}${step.done.toLocaleString("en-US")}/${step.total.toLocaleString("en-US")}` : null;
-  // Step lines only exist after SSE events arrive in the browser, so the opacity-0 start never reaches server HTML.
+function StageRow({ stage, index, now }: { stage: StageState; index: number; now: number }) {
+  const running = stage.finishedAt === null;
+  const count = countText(stage);
+  const share = stage.total > 0 ? Math.min(1, stage.done / stage.total) : running ? 0 : 1;
   return (
-    <motion.div
-      className={r.line}
-      initial={reduceMotion ? false : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: duration.fast, ease: easeOut }}
-    >
-      <dt>{STEP_LABELS[step.step]}</dt>
-      <dd>
-        {/* Counts tick many times a second; they are visible but not announced. */}
-        {count && <span aria-hidden="true">{count} </span>}
-        {active ? (
-          <span className={styles.working}>
-            <span className="visually-hidden">in progress</span>
-            <span aria-hidden="true" className={styles.caret} />
-          </span>
-        ) : (
-          <span className={ui.pass}>
-            <span aria-hidden="true">✓</span>
-            <span className="visually-hidden">done</span>
-          </span>
-        )}
-      </dd>
-    </motion.div>
+    // Stages exist only after SSE events reach the browser, so this transform start never ships in server HTML.
+    <motion.li layout="position" className={styles.stage} data-state={running ? "running" : "done"} initial={{ x: -12 }} animate={{ x: 0 }}>
+      <span className={styles.index} aria-hidden="true">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <span className={styles.name}>{STAGE_LABELS[stage.step]}</span>
+      {/* Counts and timers tick many times a second; they are visible but not announced. */}
+      <span className={styles.count} aria-hidden="true">
+        {count ?? ""}
+      </span>
+      <span className={styles.time} aria-hidden="true">
+        {now > 0 ? `${stageSeconds(stage, now)} s` : ""}
+      </span>
+      <span className={running ? styles.statusRunning : `${styles.status} ${ui.pass}`}>{running ? "running" : <>✓ done</>}</span>
+      <span className={styles.meter} aria-hidden="true">
+        <span className={styles.meterFill} style={{ transform: `scaleX(${share})` }} />
+      </span>
+    </motion.li>
   );
 }
 
-/** The receipt while it prints: each build step lands as a printed line, then blank paper feeds below it. */
-export function ReportProgress({ steps, hours }: { steps: ProgressEvent[]; hours: number }) {
-  return (
-    <div className={r.unit} aria-busy="true">
-      <div className={r.slot} aria-hidden="true" />
-      <article className={r.paper} aria-labelledby="progress-title">
-        <header className={r.head}>
-          <h2 id="progress-title" className={r.title}>
-            Printing receipt
-          </h2>
-          <p className={r.store}>Reading real receipts from Arc mainnet · last {windowLabel(hours)}</p>
-          <p className={r.store}>The public RPC can take around 30 seconds.</p>
-        </header>
-        <dl className={r.lines} aria-live="polite" aria-label="Report progress">
-          {steps.length === 0 && (
-            <div className={r.line}>
-              <dt>Connecting</dt>
-              <dd>
-                <span className="visually-hidden">in progress</span>
-                <span aria-hidden="true" className={styles.caret} />
-              </dd>
-            </div>
-          )}
-          {steps.map((s, i) => (
-            <StepLine key={s.step} step={s} isLast={i === steps.length - 1} />
-          ))}
-        </dl>
-        <div className={styles.feed} aria-hidden="true">
-          {FEED_WIDTHS.map((w, i) => (
-            <span key={i} className={styles.bar} style={{ inlineSize: w }} />
-          ))}
-        </div>
-      </article>
-    </div>
-  );
-}
+/** The build pipeline while a report streams: named stages, real counts, client-measured seconds per stage, the running stage pulsing. */
+export function ReportProgress({ stages, hours, startedAt }: { stages: readonly StageState[]; hours: number; startedAt: number | null }) {
+  const now = useNow(200);
+  const queued = queuedSteps(stages);
+  const total = startedAt !== null && now > 0 ? ((now - startedAt) / 1000).toFixed(1) : null;
+  const running = stages.filter((s) => s.finishedAt === null).map((s) => STAGE_LABELS[s.step]);
 
-/** Placeholder for the cost table in its final position, so nothing jumps when the report lands. */
-export function CostTableSkeleton() {
   return (
-    <section className={styles.tableSkeleton} aria-labelledby="cost-pending-title">
-      <h2 id="cost-pending-title" className={ui.figHeading}>
-        <span className={ui.figNo}>Fig. 2</span> Cost per function
-      </h2>
-      <p className={ui.caption}>Prices appear when the receipt finishes printing.</p>
-      <div className={styles.rows} aria-hidden="true">
-        {FEED_WIDTHS.slice(0, 5).map((w, i) => (
-          <span key={i} className={styles.row}>
-            <span className={styles.bar} style={{ inlineSize: w }} />
-          </span>
-        ))}
+    <section className={`${ui.panel} ${styles.panel}`} aria-labelledby="progress-title" aria-busy="true">
+      <div className={ui.panelHead}>
+        <h2 id="progress-title" className={ui.figHeading}>
+          <span className={ui.figNo}>01</span> Building report
+        </h2>
+        <p className={styles.total}>
+          <span className={ui.live} aria-hidden="true" />
+          <span>last {windowLabel(hours)}</span>
+          {total && <span aria-hidden="true">{total} s</span>}
+        </p>
       </div>
+      <p className={ui.caption}>Reading real receipts from Arc mainnet. The public RPC can take around 30 seconds.</p>
+      <p className="visually-hidden" aria-live="polite">
+        {stages.length === 0 ? "Connecting to Arc." : running.length > 0 ? `Running: ${running.join(", ")}.` : "Finishing the report."}
+      </p>
+      <ol className={styles.stages} role="list">
+        {stages.length === 0 && (
+          <li className={styles.stage} data-state="running">
+            <span className={styles.index} aria-hidden="true">
+              00
+            </span>
+            <span className={styles.name}>Connect</span>
+            <span className={styles.count} />
+            <span className={styles.time} />
+            <span className={styles.statusRunning}>running</span>
+          </li>
+        )}
+        <AnimatePresence initial={false}>
+          {stages.map((stage, i) => (
+            <StageRow key={stage.step} stage={stage} index={i} now={now} />
+          ))}
+        </AnimatePresence>
+        {queued.map((step, i) => {
+          // With nothing reporting, the next stage in the route is the one the server is working towards.
+          const next = i === 0 && stages.length > 0 && running.length === 0;
+          return (
+            <li key={step} className={styles.stage} data-state={next ? "running" : "queued"}>
+              <span className={styles.index} aria-hidden="true">
+                {String(stages.length + i + 1).padStart(2, "0")}
+              </span>
+              <span className={styles.name}>{STAGE_LABELS[step]}</span>
+              <span className={styles.count} />
+              <span className={styles.time} />
+              <span className={next ? styles.statusRunning : styles.status}>{next ? "next" : "queued"}</span>
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

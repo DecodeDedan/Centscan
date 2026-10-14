@@ -107,6 +107,10 @@ describe("isRangeTooLarge", () => {
     expect(isRangeTooLarge(capped)).toBe(true);
   });
 
+  it("splits a page whose response body exceeded the node's size limit", () => {
+    expect(isRangeTooLarge(new Error("HTTP response body exceeded the size limit"))).toBe(true);
+  });
+
   it("rejects other errors and non-errors", () => {
     expect(isRangeTooLarge(new BaseError("rate limited", { cause: Object.assign(new Error("x"), { code: -32005 }) }))).toBe(false);
     expect(isRangeTooLarge(new Error("header not found"))).toBe(false);

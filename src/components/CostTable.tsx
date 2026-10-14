@@ -5,9 +5,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { explorerTx, formatInt, formatMicroUsd, shortHex } from "@/lib/format";
 import type { FunctionCost, Report } from "@/lib/report";
+import { CopyButton } from "./CopyButton";
+import { costRamp, rowAnchor } from "./costScale";
 import styles from "./CostTable.module.css";
-import { PRINT_STAGGER_S, printLine } from "./motion";
-import { NumberReveal } from "./NumberReveal";
+import { CountUp } from "./CountUp";
+import { microUsdText } from "./formatters";
+import { PRINT_STAGGER_S, indicatorSpring, printLine } from "./motion";
 import ui from "./ui.module.css";
 
 function functionLabel(fn: FunctionCost): { primary: string; secondary: string | null } {
@@ -27,21 +30,32 @@ function breakable(signature: string): ReactNode[] {
   return signature.split(/(?<=[,(])/).flatMap((part, i) => (i === 0 ? [part] : [<wbr key={i} />, part]));
 }
 
-type Props = { report: Report; shouldPrint: boolean };
+/** The shareable URL of one row, built at click time from the page the reader is on. */
+function rowUrl(hours: number, anchor: string): string {
+  const { origin, pathname } = window.location;
+  return `${origin}${pathname}?hours=${hours}#${anchor}`;
+}
 
-export function CostTable({ report, shouldPrint }: Props) {
+type Props = {
+  report: Report;
+  shouldPrint: boolean;
+  /** Anchor of the row to mark, from a deep link or the chart. */
+  highlight: string | null;
+};
+
+export function CostTable({ report, shouldPrint, highlight }: Props) {
   const reduceMotion = useReducedMotion();
   const animate = shouldPrint && !reduceMotion;
-  const maxCalls = report.functions.reduce((max, fn) => Math.max(max, fn.calls), 0);
+  const ramp = costRamp(report.functions.map((fn) => fn.costMicroUsd.median));
 
   return (
-    <section className={styles.section} aria-labelledby="cost-title">
-      <h2 id="cost-title" className={ui.figHeading}>
-        <span className={ui.figNo}>Fig. 2</span> Cost per function
-      </h2>
-      <p className={ui.caption}>
-        From real receipts on Arc: <code>gasUsed × effectiveGasPrice</code>, paid in USDC, so the result is already in cents.
-      </p>
+    <section className={`${ui.panel} ${styles.section}`} aria-labelledby="cost-title">
+      <div className={ui.panelHead}>
+        <h2 id="cost-title" className={ui.figHeading}>
+          <span className={ui.figNo}>03</span> Cost per function
+        </h2>
+        <p className={ui.label}>gasUsed × effectiveGasPrice · USDC</p>
+      </div>
 
       {report.functions.length > 0 ? (
         <div className={styles.scroll} tabIndex={0} role="region" aria-label="Cost per function, scrollable">
@@ -71,34 +85,51 @@ export function CostTable({ report, shouldPrint }: Props) {
             <tbody>
               {report.functions.map((fn, i) => {
                 const label = functionLabel(fn);
-                const share = maxCalls > 0 ? (fn.calls / maxCalls) * 100 : 0;
+                const anchor = rowAnchor(fn.selector);
+                const stop = ramp(fn.costMicroUsd.median);
+                const marked = highlight === anchor;
                 return (
-                  // shouldPrint is only true after a stream finishes in the browser, so the opacity-0 start never reaches server HTML.
+                  // shouldPrint is only true after a stream finishes in the browser, so the transformed start never reaches server HTML.
                   <motion.tr
                     key={fn.selector}
-                    initial={animate ? { opacity: 0, y: 4 } : false}
-                    animate={{ opacity: 1, y: 0 }}
+                    id={anchor}
+                    tabIndex={-1}
+                    className={styles.row}
+                    data-highlight={marked ? "true" : undefined}
+                    initial={animate ? { x: -12 } : false}
+                    animate={{ x: 0 }}
                     transition={animate ? printLine(i) : undefined}
                   >
                     <th scope="row" className={styles.fn}>
-                      <span className={styles.fnName}>{breakable(label.primary)}</span>
-                      {label.secondary && <span className={styles.sub}>{label.secondary}</span>}
-                    </th>
-                    <td className={`${styles.num} ${styles.median}`}>
-                      <NumberReveal value={formatMicroUsd(fn.costMicroUsd.median)} animate={animate} delay={i * PRINT_STAGGER_S} />
-                    </td>
-                    <td className={styles.num}>{formatMicroUsd(fn.costMicroUsd.p90)}</td>
-                    <td className={styles.num}>
-                      {formatInt(fn.calls)}
-                      <span className={styles.meter} aria-hidden="true">
-                        <span className={styles.meterFill} style={{ inlineSize: `${share}%` }} />
+                      {marked && <motion.span layoutId="cost-row-mark" className={styles.mark} transition={indicatorSpring} aria-hidden="true" />}
+                      <span className={styles.fnHead}>
+                        <span className={styles.swatch} style={{ background: stop.color }} aria-hidden="true" />
+                        <span className={styles.fnName}>{breakable(label.primary)}</span>
                       </span>
+                      <span className={styles.sub}>
+                        {label.secondary && <span>{label.secondary}</span>}
+                        <span>{stop.label} for this contract</span>
+                      </span>
+                      <span className={styles.rowCopy}>
+                        <CopyButton value={() => rowUrl(report.window.hours, anchor)} label={`Copy link to the ${label.primary} row`} text="Copy link" />
+                      </span>
+                    </th>
+                    <td className={`${styles.num} ${styles.median}`} data-label="Median">
+                      <CountUp value={Number(fn.costMicroUsd.median)} format={microUsdText} animate={animate} delay={i * PRINT_STAGGER_S} />
                     </td>
-                    <td className={styles.num}>
+                    <td className={styles.num} data-label="p90">
+                      {formatMicroUsd(fn.costMicroUsd.p90)}
+                    </td>
+                    <td className={styles.num} data-label="Calls">
+                      {formatInt(fn.calls)}
+                    </td>
+                    <td className={styles.num} data-label="Min–max">
                       {formatMicroUsd(fn.costMicroUsd.min)}–{formatMicroUsd(fn.costMicroUsd.max)}
                     </td>
-                    <td className={styles.num}>{formatInt(fn.medianGas)}</td>
-                    <td>
+                    <td className={styles.num} data-label="Median gas">
+                      {formatInt(fn.medianGas)}
+                    </td>
+                    <td data-label="Sample tx">
                       <a className={styles.tx} href={explorerTx(fn.sampleTx)} target="_blank" rel="noopener noreferrer" aria-label={`Sample transaction ${fn.sampleTx} (opens in a new tab)`}>
                         {shortHex(fn.sampleTx)}
                       </a>

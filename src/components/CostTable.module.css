@@ -1,14 +1,10 @@
 .section {
-  display: grid;
   gap: var(--space-3);
-  min-inline-size: 0;
 }
 
 /* The table scrolls inside its own frame; the page never scrolls sideways. */
 .scroll {
   overflow-x: auto;
-  margin-block-start: var(--space-2);
-  border-block: 2px solid var(--text);
   overscroll-behavior-inline: contain;
 }
 
@@ -26,30 +22,40 @@
   white-space: nowrap;
 }
 
-.table thead th,
-.table thead .num {
-  font-family: var(--font-text);
-}
-
 .table thead th {
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-weight: 400;
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  border-block-end: 1px solid var(--text);
+  border-block-end: 1px solid var(--border);
 }
 
-.table tbody tr + tr > * {
-  border-block-start: 1px solid var(--divider);
+.row > * {
+  border-block-end: 1px solid var(--divider);
+  scroll-margin-block: var(--space-24);
 }
 
-.table tbody tr:hover > * {
+.row {
+  scroll-margin-block: var(--space-24);
+}
+
+.row:hover > * {
   background: var(--control);
 }
 
-.table th:first-child,
-.table td:first-child {
-  padding-inline-start: 0;
+.row:focus {
+  outline: none;
+}
+
+.row:focus-visible > * {
+  background: var(--control);
+}
+
+.row[data-highlight] > * {
+  background: var(--accent-subtle);
 }
 
 .table .num {
@@ -59,49 +65,78 @@
 }
 
 .table .fn {
+  position: relative;
   font-weight: 400;
   white-space: normal;
-  min-inline-size: 20ch;
+  min-inline-size: 22ch;
+  padding-inline-start: var(--space-3);
+}
+
+/* One marker travels to the highlighted row (layoutId), so a chart click visibly lands here. */
+.mark {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 2px;
+  background: var(--accent);
+}
+
+.fnHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.swatch {
+  flex: none;
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: 1px;
+  transform: translateY(-1px);
 }
 
 .fnName {
   display: block;
-  max-inline-size: 28ch;
+  max-inline-size: 30ch;
   font-family: var(--font-mono);
   overflow-wrap: break-word;
 }
 
 .sub {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  padding-inline-start: var(--space-4);
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
 
+/* "Copy link" stays in the tab order; it only fades back when the row is neither hovered nor focused, on pointers that can hover. */
+.rowCopy {
+  display: block;
+  padding-inline-start: var(--space-3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rowCopy {
+    opacity: 0.35;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .row:hover .rowCopy,
+  .row:focus-within .rowCopy,
+  .row[data-highlight] .rowCopy {
+    opacity: 1;
+  }
+}
+
 .table .median {
   font-size: var(--text-xl);
   line-height: var(--leading-xl);
   font-weight: 600;
-  letter-spacing: -0.02em;
   color: var(--accent-text);
-}
-
-/* Share of calls against the busiest function: a hairline meter, not a chart. */
-.meter {
-  display: block;
-  margin-block-start: var(--space-1);
-  margin-inline-start: auto;
-  inline-size: 8ch;
-  block-size: var(--space-1);
-  background: var(--control-active);
-}
-
-.meterFill {
-  display: block;
-  block-size: 100%;
-  margin-inline-start: auto;
-  background: var(--accent-border);
 }
 
 .tx {
@@ -112,8 +147,9 @@
   display: grid;
   justify-items: start;
   gap: var(--space-3);
-  padding-block: var(--space-6);
-  border-block: 2px solid var(--text);
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .emptyTitle {
@@ -125,12 +161,60 @@
   font-size: var(--text-sm);
 }
 
-@media (max-width: 40em) {
+/* Below 480 px the table becomes a stacked list: one ruled block per function, each value labelled. */
+@media (width < 30rem) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table th,
+  .table td {
+    display: block;
+  }
+
+  .table thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .row {
+    padding-block: var(--space-3);
+    border-block-end: 1px solid var(--divider);
+  }
+
+  .row > * {
+    border-block-end: 0;
+  }
+
   .table .fn {
-    min-inline-size: 14ch;
+    min-inline-size: 0;
+    padding: 0 0 var(--space-2) var(--space-3);
   }
 
   .fnName {
-    max-inline-size: 18ch;
+    max-inline-size: none;
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-1) 0 var(--space-1) var(--space-3);
+    white-space: normal;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .table .median {
+    font-size: var(--text-lg);
   }
 }

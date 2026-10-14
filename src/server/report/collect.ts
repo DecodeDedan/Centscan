@@ -46,8 +46,9 @@ export function isRangeTooLarge(error: unknown): boolean {
     if (match) return true;
   }
   // The public Arc RPC also caps one getLogs answer at 2,000 logs ("query exceeds max results 2000, retry with
-  // the range a-b"); splitting the page resolves it the same way.
-  return error instanceof Error && /range too large|exceeds max results/.test(error.message);
+  // the range a-b") and rejects oversized bodies ("HTTP response body exceeded the size limit" on busy
+  // 24 h USDC pages); splitting the page resolves both the same way.
+  return error instanceof Error && /range too large|exceeds max results|exceeded the size limit/.test(error.message);
 }
 
 /** Splits [from, to] into pages, newest first, so sampling keeps the most recent activity. */

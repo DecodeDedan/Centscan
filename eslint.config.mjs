@@ -11,7 +11,7 @@ const config = [
     },
   },
   {
-    ignores: [".next/**", "node_modules/**", "contracts/**", "coverage/**", "playwright-report/**", "brand/tools/**", "next-env.d.ts"],
+    ignores: [".next/**", "node_modules/**", "contracts/**", "coverage/**", "playwright-report/**", "brand/tools/**", "video/**", "next-env.d.ts"],
   },
 ];
 

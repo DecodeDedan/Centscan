@@ -6,6 +6,7 @@ import s from "@/components/site/SiteChrome.module.css";
 
 const NAV = [
   { href: "/#method", label: "Method" },
+  { href: "/#formula", label: "Formula" },
   { href: "/#proof", label: "Proof" },
   { href: "/#badge", label: "Badge" },
 ] as const;
@@ -15,9 +16,10 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
     <div className={s.site}>
       <header className={s.header}>
         <div className={s.bar}>
-          <Link href="/" className={s.logo}>
+          <Link href="/" className={s.logo} aria-label="Centscan home">
             {/* eslint-disable-next-line @next/next/no-img-element -- outlined brand SVG; next/image adds nothing for a vector logo */}
-            <img src="/brand/centscan-logo.svg" alt="Centscan home" width={134} height={32} />
+            <img src="/brand/centscan-mark-dark.svg" alt="" width={32} height={32} />
+            <span className={s.wordmark}>centscan</span>
           </Link>
           <nav aria-label="Site" className={s.nav}>
             <ul>
@@ -39,14 +41,14 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
       <footer className={s.footer}>
         <div className={s.footerInner}>
           <div className={s.footerCta}>
-            <p className={s.footerLine}>Paste an address. Get the receipt.</p>
+            <p className={s.footerLine}>Paste an address. Get the receipt, priced to the cent.</p>
             <PressLink href="/app" variant="primary" isMagnetic>
               Launch app
             </PressLink>
           </div>
           <div className={s.footerMeta}>
             {/* eslint-disable-next-line @next/next/no-img-element -- outlined brand SVG */}
-            <img src="/brand/centscan-mark.svg" alt="" width={24} height={24} />
+            <img src="/brand/centscan-mark-dark.svg" alt="" width={24} height={24} />
             <p>
               Centscan is built on Arc. It is an independent tool, not an Arc or Circle product. The method, attestation protocol and
               limits are written up in <code>docs/WHITEPAPER.md</code> and <code>docs/ARCHITECTURE.md</code> in the repository.

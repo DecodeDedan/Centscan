@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AddressForm } from "@/components/AddressForm";
-import { Verdict } from "@/components/Verdict";
+import { costRamp } from "@/components/costScale";
+import { scanExamples } from "@/components/examples";
+import { RecentLedger, type LedgerRow } from "@/components/RecentLedger";
+import { TelemetryPanel } from "@/components/TelemetryPanel";
 import ui from "@/components/ui.module.css";
 import { activityLabel, sourceLabel, windowLabel } from "@/components/verdicts";
 import type { ReportPayload } from "@/lib/api";
-import { formatMicroUsd, shortHex } from "@/lib/format";
+import { formatMicroUsd } from "@/lib/format";
 import { getRecentReports } from "@/server/service";
 import styles from "./page.module.css";
 
@@ -31,59 +33,25 @@ function timeAgo(iso: string, now: number): string {
   return "just now";
 }
 
-function Ledger({ recent, now }: { recent: ReportPayload[]; now: number }) {
-  return (
-    <div className={styles.scroll} tabIndex={0} role="region" aria-label="Recent scans, scrollable">
-      <table className={styles.ledger}>
-        <thead>
-          <tr>
-            <th scope="col">Contract</th>
-            <th scope="col" className={styles.num}>
-              Median call
-            </th>
-            <th scope="col">Source</th>
-            <th scope="col">Activity</th>
-            <th scope="col" className={styles.num}>
-              Window
-            </th>
-            <th scope="col" className={styles.num}>
-              Scanned
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {recent.map(({ report, reportHash, createdAt }) => (
-            <tr key={reportHash}>
-              <th scope="row">
-                <Link className={styles.contract} href={`/c/${report.target}?hours=${report.window.hours}`} title={report.target}>
-                  {shortHex(report.target, 10, 6)}
-                </Link>
-              </th>
-              <td className={`${styles.num} ${styles.cost}`}>{report.headline.medianMicroUsd !== null ? formatMicroUsd(report.headline.medianMicroUsd) : <span className={styles.none}>—</span>}</td>
-              <td>
-                <Verdict label={sourceLabel(report.source)} />
-              </td>
-              <td>
-                <Verdict label={activityLabel(report.activity)} />
-              </td>
-              <td className={styles.num}>{windowLabel(report.window.hours)}</td>
-              <td className={styles.num}>
-                <time dateTime={createdAt} title={createdAt}>
-                  {timeAgo(createdAt, now)}
-                </time>
-              </td>
-            </tr>
-          ))}
-          {/* Unfilled ledger lines: the book has room for RECENT_LIMIT entries. Decorative, so hidden from assistive tech. */}
-          {Array.from({ length: RECENT_LIMIT - recent.length }, (_, i) => (
-            <tr key={`blank-${i}`} aria-hidden="true" className={styles.blank}>
-              <td colSpan={6} />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+function ledgerRows(recent: readonly ReportPayload[], now: number): LedgerRow[] {
+  const medians = recent.flatMap(({ report }) => (report.headline.medianMicroUsd === null ? [] : [report.headline.medianMicroUsd]));
+  const ramp = costRamp(medians);
+  return recent.map(({ report, reportHash, createdAt }) => {
+    const median = report.headline.medianMicroUsd;
+    const stop = median === null ? null : ramp(median);
+    return {
+      reportHash,
+      address: report.target,
+      hours: report.window.hours,
+      windowLabel: windowLabel(report.window.hours),
+      median: median === null ? null : formatMicroUsd(median),
+      ramp: stop ? { label: stop.label, color: stop.color } : null,
+      source: sourceLabel(report.source),
+      activity: activityLabel(report.activity),
+      createdAt,
+      ago: timeAgo(createdAt, now),
+    };
+  });
 }
 
 export default function ScannerPage() {
@@ -94,62 +62,37 @@ export default function ScannerPage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.scan} aria-labelledby="scan-title">
+      <section className={`${ui.panel} ${styles.scan}`} aria-labelledby="scan-title">
+        <div className={ui.panelHead}>
+          <p className={ui.figHeading}>
+            <span className={ui.figNo}>01</span> Scanner
+          </p>
+          <p className={ui.label}>Arc mainnet · chain 5042</p>
+        </div>
         <div className={styles.titleBlock}>
           <h1 id="scan-title" className={styles.title}>
             What does this contract cost to call?
           </h1>
           <p className={styles.lead}>
-            Paste an Arc contract address. Centscan reads its real transaction receipts and tells you whether the source is verified, whether anyone uses
-            it, and what each function costs, in cents.
+            Paste an Arc contract address. Centscan reads its real transaction receipts and tells you whether the source is verified, whether anyone uses it,
+            and what each function costs, in cents.
           </p>
         </div>
-        <div className={styles.panel}>
-          <AddressForm />
-        </div>
+        <AddressForm examples={scanExamples(recent)} />
       </section>
 
-      <div className={styles.side}>
-        <section className={styles.recent} aria-labelledby="recent-title">
-          <div className={styles.recentHead}>
-            <h2 id="recent-title" className={ui.figHeading}>
-              <span className={ui.figNo}>Fig. 1</span> Recent scans
-            </h2>
-            {recent.length > 0 && (
-              <p className={ui.caption}>
-                The last {recent.length === 1 ? "report" : `${recent.length} reports`} built on this server, newest first.
-              </p>
-            )}
-          </div>
-          {recent.length === 0 ? (
-            <p className={styles.empty}>No contracts scanned yet. Paste an address to print the first receipt.</p>
-          ) : (
-            <Ledger recent={recent} now={now} />
-          )}
-        </section>
+      <section className={`${ui.panel} ${styles.recent}`} aria-labelledby="recent-title">
+        <div className={ui.panelHead}>
+          <h2 id="recent-title" className={ui.figHeading}>
+            <span className={ui.figNo}>02</span> Recent scans
+          </h2>
+          <p className={ui.label}>{recent.length > 0 ? `${recent.length} newest · ramp across these medians` : "none yet"}</p>
+        </div>
+        <RecentLedger rows={ledgerRows(recent, now)} />
+      </section>
 
-        <figure className={styles.formula}>
-          <div className={styles.terms} aria-hidden="true">
-            <span className={styles.term}>
-              <span className={styles.symbol}>gasUsed</span>
-              <span className={styles.gloss}>gas the call burned</span>
-            </span>
-            <span className={styles.op}>×</span>
-            <span className={styles.term}>
-              <span className={styles.symbol}>effectiveGasPrice</span>
-              <span className={styles.gloss}>price paid, tip included</span>
-            </span>
-            <span className={styles.op}>=</span>
-            <span className={styles.term}>
-              <span className={`${styles.symbol} ${styles.result}`}>¢</span>
-              <span className={styles.gloss}>Arc gas is USDC</span>
-            </span>
-          </div>
-          <figcaption className={styles.figcaption}>
-            <span className={ui.figNo}>Fig. 2</span> The cost of one call is gasUsed × effectiveGasPrice. Arc pays gas in USDC, so that product is already a
-            dollar amount.
-          </figcaption>
-        </figure>
+      <div className={styles.telemetry}>
+        <TelemetryPanel />
       </div>
     </div>
   );

@@ -3,12 +3,13 @@
 import { motion, useReducedMotion, type MotionProps } from "framer-motion";
 import type { ReactNode } from "react";
 import type { ReportPayload } from "@/lib/api";
-import { explorerTx, formatInt, formatMicroUsd, formatUsd, shortHex } from "@/lib/format";
+import { explorerTx, formatInt, formatUsd, shortHex } from "@/lib/format";
 import type { AttestationRecord } from "@/lib/report";
 import { duration, easeOut, PRINT_STAGGER_S, printLine, stampSpring } from "./motion";
 import styles from "./Receipt.module.css";
 import { partialNotes, utcStamp } from "./receiptNotes";
-import { NumberReveal } from "./NumberReveal";
+import { CountUp } from "./CountUp";
+import { microUsdText } from "./formatters";
 import { Verdict } from "./Verdict";
 import { activityLabel, sourceLabel, windowLabel } from "./verdicts";
 
@@ -23,7 +24,7 @@ type Props = {
 /** Hands out the next print slot, so lines land top to bottom. Fresh reports exist only client-side, so no SSR hidden state. */
 function printer(animate: boolean): () => MotionProps {
   let index = 0;
-  return () => (animate ? { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, transition: printLine(index++) } : { initial: false });
+  return () => (animate ? { initial: { x: -8 }, animate: { x: 0 }, transition: printLine(index++) } : { initial: false });
 }
 
 function Line({ term, children, m }: { term: string; children: ReactNode; m: MotionProps }) {
@@ -45,9 +46,9 @@ function Stamp({ record, fresh }: { record: AttestationRecord; fresh: boolean })
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Attested on Arc in block ${formatInt(record.blockNumber)}. Open the attestation transaction (opens in a new tab)`}
-      initial={press ? { scale: 1.8, rotate: 4, opacity: 0 } : false}
-      animate={{ scale: 1, rotate: -7, opacity: 1 }}
-      transition={press ? { ...stampSpring, opacity: { duration: duration.instant } } : undefined}
+      initial={press ? { scale: 1.8, rotate: 4 } : false}
+      animate={{ scale: 1, rotate: -7 }}
+      transition={press ? stampSpring : undefined}
     >
       <span className={styles.stampWord}>Attested on Arc</span>
       <span className={styles.stampMeta}>block {formatInt(record.blockNumber)}</span>
@@ -67,19 +68,22 @@ export function Receipt({ payload, shouldPrint, stampFresh }: Props) {
 
   return (
     <div className={styles.unit}>
-      <div className={styles.slot} aria-hidden="true" />
       <motion.article
         className={styles.paper}
+        data-stamped={attestation ? "true" : undefined}
         aria-labelledby="receipt-title"
-        initial={animate ? { y: -24, rotateX: -14 } : false}
-        animate={{ y: 0, rotateX: 0 }}
+        initial={animate ? { scaleY: 0.9, y: -8 } : false}
+        animate={{ scaleY: 1, y: 0 }}
         transition={{ duration: duration.base, ease: easeOut }}
-        style={{ transformPerspective: 900, originY: 0 }}
+        style={{ originY: 0 }}
       >
         <header className={styles.head}>
           <h2 id="receipt-title" className={styles.title}>
             Receipt
           </h2>
+          <span className={styles.figNo} aria-hidden="true">
+            04
+          </span>
           <p className={styles.store}>Centscan · Arc mainnet · chain {report.chainId}</p>
           <p className={styles.store}>
             {shortHex(report.target, 10, 8)} · last {windowLabel(report.window.hours)}
@@ -122,7 +126,7 @@ export function Receipt({ payload, shouldPrint, stampFresh }: Props) {
               <p className={styles.totalRow}>
                 <span className={styles.totalTerm}>Median call</span>
                 <span className={styles.totalValue}>
-                  <NumberReveal value={formatMicroUsd(headline.medianMicroUsd)} animate={animate} delay={totalDelay} />
+                  <CountUp value={Number(headline.medianMicroUsd)} format={microUsdText} animate={animate} delay={totalDelay} />
                 </span>
               </p>
               <p className={styles.totalSub}>

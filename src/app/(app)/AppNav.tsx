@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./layout.module.css";
 
-/** Scanner link: the current page on /app, and the section the reader is in on a report. */
+/** Scanner is the current page on /app and the section the reader is in on a report; Site goes back to the landing page. */
 export function AppNav() {
   const pathname = usePathname();
   const current = pathname === "/app" ? "page" : pathname.startsWith("/c/") ? "true" : undefined;
@@ -12,6 +12,9 @@ export function AppNav() {
     <nav aria-label="App" className={styles.nav}>
       <Link href="/app" className={styles.navLink} aria-current={current}>
         Scanner
+      </Link>
+      <Link href="/" className={styles.navLink}>
+        Site
       </Link>
     </nav>
   );

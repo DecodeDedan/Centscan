@@ -154,3 +154,126 @@ The user's critique of v1: space is wasted, the type lacks punch, the background
 - TBT < 200 ms on `/`, measured with Lighthouse
 
 Fonts are subset by next/font, and no web font is render-blocking.
+
+---
+
+# v3 refinements: inspiration from 21st.dev, Mobbin and Motion (14 Oct 2026)
+
+Sources were researched in the browser with forge. These are principles and mechanisms, not copied code. Each finding is translated into the two-ink receipt language. v3 refines v2; it is not a restart.
+
+## Principles adopted
+1. **Verdict before evidence.** Interpret first, then show the data (Mobbin dashboard study: Amplitude, Binance).
+2. **Numbers are typography.** Use tabular numerals, per-digit or per-frame spring updates written straight to the DOM, and an **overdamped** spring (no overshoot) for money. Sources: 21st.dev Sliding Number (stiffness 280, damping 18, mass 0.3) and Magic UI Number Ticker (damping 60, stiffness 100). Motion's free recipe: `useMotionValue` → `useTransform` with `Intl` formatting → `animate()`, rendered as a `motion.span` child. Never use the paid Motion+ `AnimateNumber`.
+3. **Animate the material's own behaviour:** print, tear, reprint. No generic cross-fades (21st.dev Receipt Pricing: switching plans reprints the slip; print speed is one tunable number).
+4. **One moving highlight** with a shared `layoutId` for tabs and segmented controls (Motion layout animations; motion-primitives Animated Background).
+5. **Long jobs show named, truthful stages** with real counts and elapsed time, never a fake percentage (Mobbin progress indicators).
+6. **Results are permanent and addressable down to the row** (Stripe `receipt_url`, Vercel `#L6` anchors).
+7. **Empty and error states teach, and offer one action** (Mobbin empty states).
+8. **Effects use theme-aware ink-on-paper colour pairs, never glows.** Grain stays static: paper, not film. Gate tilt by pointer type and by reduced motion.
+
+## Mapped changes
+
+| Surface | Change | From |
+|---|---|---|
+| Report header | **Verdict sentence** above everything, built from report data only. Example: "Live and not verified on Sourcify. A typical call costs 0.138¢; the most expensive function is aggregate3 at 3.61¢." | Principle 1 |
+| Receipt total and table medians | Overdamped per-frame count-up on **fresh** reports only; tabular numerals; server-rendered reports show final values with no animation | Principle 2 |
+| Report window switch (1 h / 24 h / 7 d) | Receipt **reprints**: the slip tears up and the new one feeds down (transform only, ~460 ms total) | Principle 3 |
+| Tabs and segmented controls | Single `layoutId` highlight in ledger green (keep, and make sure there is no flash on load) | Principle 4 |
+| Build progress | Named stages with counts **and elapsed seconds per stage**; the current stage label gets an ink text shimmer (gradient clipped to the text, mid-grey to ink, 2 s); no percentage bar | Principle 5 + 21st.dev Text Shimmer |
+| Cost table rows | Each row has an id `#fn-<selector>`. Hovering or focusing a row shows "Copy link to this row". Loading `/c/<addr>?hours=N#fn-0x…` scrolls to and highlights that row. Below 480 px the table becomes a stacked list (one card-less ruled block per function) | Principle 6 + Mobbin table guidance |
+| Scanner input `/app` | Empty field cycles **real** example addresses as the placeholder (contracts with cached reports, plus the Arc USDC address `0x3600…0000`). Under the field, **example chips** start a scan in one click | Principle 7 + Aceternity placeholder cycle |
+| Fresh report address | Contract address **resolves from scrambled hex** once (0.8 s, 40 ms frames, hex alphabet only), only on fresh reports | 21st.dev Text Scramble |
+| Error: not a contract | Say why, plus one fix: "No contract code at this address on Arc mainnet. Check the address or try an example." with the chips | Principle 7 |
+| Badge preview on a report | Request `/badge/<addr>.svg?hours=N` (the route supports `?hours`), so the badge matches the receipt next to it | Bug found in review |
+| Hero till (site) | The big total uses the overdamped digit roll as the paper passes it. Optional **tear-off**: clicking the paper tears it and reprints from the top. Keyboard: a "Reprint" button | Principles 2 and 3 |
+| Site formula band | CountUp switched to an overdamped spring with tabular numerals, starting when the band enters view | Principle 2 |
+| Share card / badge section (site) | A subtle pointer tilt (±6°, 1000 px perspective, spring back) on the badge "ticket", with a perforated edge; off for touch and reduced motion | 21st.dev Tilt, Admit One Ticket |
+
+## Anti-patterns confirmed (do not use)
+- 21st.dev's glowing search bar, liquid metal hero, background beams and shader backgrounds: dark, neon aesthetics that clash with paper.
+- Animated grain jitter.
+- Holographic or foil effects.
+- Any Motion+ (paid) component.
+
+---
+
+# v4: the Cost Observatory (14 Oct 2026, replaces v1–v3 where they conflict)
+
+The user's verdict on v3: "too whiteish, a lot of empty space, looks OLD, not futuristic, enthusiastic and interactive". v4 is a full reimagining in the motionui **future** register (skill `motionui:futuristic`, reference build `/Users/okwared/Softwares/my-mods/motionui/skills/futuristic/examples/instrument-hero.html`).
+
+**Seed:** spacecraft glass cockpit, dense point cloud, one emissive signal colour, live idle motion, real post stack. White is rejected, so the field is the brand's deep ink. Borrowed from a second seed: a false-colour ramp that encodes real cost.
+
+## Field, colour, type
+- **Field:** dark. `<html data-theme="dark">` is set in the root layout. Tokens are in `src/styles/tokens.css` (regenerated with motionui `system`: accent `#3FBF8F` green-on-ink, tinted neutrals, compact, sharp, light and dark both contrast-checked). Use roles only (`--page`, `--surface`, `--raised`, `--text`, `--accent`, …). The light field still exists (`data-theme="light"`), but dark is the product.
+- **Signal colour:** green `--accent`, the only emissive hue in the UI.
+- **Cost ramp** (data only, never decoration): cheap is green, middle is amber, expensive is red. The position on the ramp is `log10(medianMicroUsd)`, mapped across the report's own min to max. Every coloured point carries a text label too; colour is never the only signal.
+- **Type:**
+  - IBM Plex Sans Condensed 600 for display, at huge sizes.
+  - Plex Sans for UI.
+  - Plex Mono with `tabular-nums` for every readout.
+  - No sci-fi fonts.
+- **Logo on dark:** `public/brand/centscan-mark-dark.svg` (copy it from `brand/` if it's missing) beside the wordmark set in Plex in `--text`.
+
+## Truth rule for readouts
+Every number on screen is real:
+- **Live chain:** `GET /api/chain` returns `{ ok, data: { blockNumber, baseFeeGwei, timestamp, transferMicroUsd } }`. It is cached for 2 s server-side; poll it at most every 2 s, and only while the tab is visible.
+- **Report data:** `getRecentReports` / `ReportPayload`.
+- **Client-measured:** fps, pointer, elapsed time.
+
+No fake "SYSTEM ONLINE", no random hex, no invented throughput. Decorative particles are structure and are never labelled as data.
+
+## Site `/`: five layers in the hero
+1. **Scene:** the ¢ mark as a 3D object. The open arc is a partial torus and the bar a capsule, in a physical material: metallic plus a thin-film fresnel tint limited to greens and ice, with `fwidth` contour lines so it reads as scanned. Three tilted orbit rings stand for the 1 h, 24 h and 7 d windows.
+2. **Volume:** 8–12k GPU particles stream along spiral paths into the mark, like transactions arriving. Positions are computed in the vertex shader, one draw call, with a manual `boundingSphere`. Dim; additive blending.
+3. **Data nodes:** the real functions from the newest cached report. Each is an emissive node orbiting the mark at a radius set by `log(median cost)`, sized by `calls`, coloured from the cost ramp. Each node has a diegetic HTML label projected from 3D, e.g. "aggregate3 · 19 calls · 1.08¢", dimmed when behind the mark. With no report there are no nodes, and a "Scan a contract to light this up" label shows instead.
+4. **Light:** `UnrealBloomPass` with threshold about 0.62, so only the nodes, contours and accents bloom. Grain, a mild vignette, and chromatic aberration only during the boot transition.
+5. **HUD and motion:**
+   - **Telemetry rail:** live block number ticking, base fee in gwei, plain transfer cost in ¢, seconds since the last block, fps.
+   - **Pointer and labels:** a reticle following the pointer, rulers and the report readouts.
+   - **Boot timeline (GSAP):** particles assemble into the ¢, the readouts decode-scramble to their real values, then live idle (parts at different rates, some still).
+   - **Interaction:** pointer parallax; hovering a data node highlights its label and table row.
+   - **Scroll:** a camera dolly through the sections.
+   - **Pause:** a visible pause control (WCAG 2.2.2).
+   - **Reduced motion:** one finished still frame.
+- **Hero copy and controls:**
+  - The H1 "On Arc, gas is a price." stays plain HTML, never animated (LCP).
+  - The **address input lives in the hero**: paste and scan goes straight to `/c/<addr>`, with inline validation and example chips from real cached reports plus Arc USDC `0x3600…0000`.
+  - "Launch app" goes to `/app`.
+
+## Site sections (dense, interactive, no empty bands)
+- **Live from Arc:** a full-width telemetry strip from `/api/chain`, plus the newest report's verdict sentence.
+- **How it measures:** an interactive pipeline diagram (logs → receipts → selectors → cents → hash → Arc). Hovering or focusing a stage lights its path and shows the real numbers from the newest report (pages, transactions, functions).
+- **The formula:** live. It uses the current base fee from `/api/chain` to show `21,000 × baseFee = X¢` updating, next to the documented receipt `183,288 × 24.000001249 gwei = 0.440¢`.
+- **Proof:** the registry address and how to verify, with a "recompute hash" demo on the newest report (canonicalHash runs in the browser).
+- **Badge:** the live badge as a ticket with a subtle pointer tilt, plus copy.
+- **Final CTA.**
+- **Layout:** fluid 12-column grid to 1600 px, mixing asymmetric spans. No identical card grids, and no section with a big empty half.
+
+## App `/app` and `/c/[address]`: mission console
+- **App bar:** logo, Scanner, a live chain ticker (block number and base fee from `/api/chain`) and a link to `/`.
+- **`/app`:**
+  - A command-bar style address input, big mono, with a placeholder cycling real addresses and example chips.
+  - The window as a segmented control.
+  - Beside it, a live "recent scans" ledger with cost-ramp swatches and labels.
+  - Below, a compact live telemetry panel.
+- **`/c/[address]`:**
+  - **Header:** the verdict sentence first (deterministic, from report fields). The address resolves from scrambled hex (fresh reports only). Window switch and Refresh.
+  - **KPI readouts:** a huge mono median in ¢ (overdamped count-up on fresh reports), calls, unique senders, success rate and coverage.
+  - **Cost-range chart (signature of the app):** interactive SVG. One row per function, a bar from min to p90 with a median tick, ramp-coloured, a hover/focus crosshair with a tooltip, keyboard-navigable rows, and clicking a row scrolls to its table row.
+  - **Cost table:** row anchors `#fn-<selector>` with "Copy link"; becomes a stacked list below 480 px.
+  - **Receipt:** a HUD "printout" panel with the same lines, plus the stamp when attested.
+  - **Tabs:** Badge (preview from `/badge/<addr>.svg?hours=N`), Attest, Verify.
+- **Build progress:** a live pipeline with named stages, counts, elapsed seconds per stage, and the current stage pulsing in the signal colour.
+- **Every PRD §6 state stays:** empty, invalid, loading, success, partial, no-activity, error and rate-limited.
+
+## Motion budget and contract
+- **Libraries:** three.js and GSAP on `/` only (dynamic import after first paint, own chunk). Framer Motion in the app.
+- **Hero performance:**
+  - DPR capped at 1.75, with adaptive quality: watch frame time and drop DPR, then particles.
+  - Particles and mesh halved below 720 px.
+  - Render only while the hero is visible.
+  - Stop on `visibilitychange`, dispose on unmount or `pagehide`.
+  - Guard zero-size resizes.
+  - No WebGL: show a static, styled HUD with the data nodes as an HTML list.
+- **Speed targets (production):** LCP < 2.0 s on throttled mobile, CLS < 0.05, TBT < 200 ms. State gzip sizes.
+- **Never:** purple or cyan neon, gradient text, glowing borders on every card, glass over blob gradients, hex grids or matrix rain, fake terminal logs, "Initialising…" gates in front of real content, constant glitch.

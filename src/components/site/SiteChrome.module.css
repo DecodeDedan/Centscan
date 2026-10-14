@@ -15,17 +15,6 @@
   color: var(--text);
 }
 
-/* Paper tooth: one fixed tile of fractal noise over the whole page, under the content, at about 4%. */
-.site::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.045;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.14 0 0 0 0 0.12 0 0 0 0 0.1 0 0 0 1.4 -0.2'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 .bar,
 .footerInner {
   width: min(100% - 2 * var(--gutter), var(--site-max));
@@ -33,6 +22,9 @@
 }
 
 .header {
+  position: relative;
+  z-index: 10;
+  background: var(--page);
   border-block-end: 1px solid var(--divider);
 }
 
@@ -48,12 +40,29 @@
 
 .logo {
   display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.logo:hover {
+  color: var(--text);
+  text-decoration: none;
 }
 
 .logo img {
   display: block;
   height: var(--space-8);
   width: auto;
+  border-radius: var(--radius-sm);
+}
+
+.wordmark {
+  font-family: var(--font-text);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .nav {
@@ -96,7 +105,7 @@
   background: var(--surface);
   overflow-x: clip;
   color: var(--text);
-  border-block-start: 2px solid var(--text);
+  border-block-start: 2px solid var(--accent);
 }
 
 .footerInner {
@@ -113,7 +122,7 @@
 
 .footerLine {
   margin: 0;
-  max-width: 14ch;
+  max-width: 18ch;
   font-family: var(--font-condensed);
   font-size: var(--display-hero);
   line-height: 0.92;

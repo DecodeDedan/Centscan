@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { scanExamples } from "@/components/examples";
 import { ReportClient } from "@/components/ReportClient";
 import { parseWindowHours } from "@/lib/report";
-import { getAttestationInfo, getCachedReport, parseAddressParam } from "@/server/service";
+import { getAttestationInfo, getCachedReport, getRecentReports, parseAddressParam } from "@/server/service";
 import { InvalidState } from "./InvalidState";
 
 export const dynamic = "force-dynamic";
+
+const EXAMPLE_SOURCE_LIMIT = 8;
 
 type Props = {
   params: Promise<{ address: string }>;
@@ -51,6 +54,10 @@ export default async function ReportPage({ params, searchParams }: Props) {
 
   const initial = getCachedReport(address, hours);
   const attestationInfo = getAttestationInfo();
+  // Offered when the address turns out not to be a contract; never includes the address that just failed.
+  const examples = scanExamples(getRecentReports(EXAMPLE_SOURCE_LIMIT)).filter((e) => e.address !== address);
 
-  return <ReportClient key={`${address}-${hours}`} address={address} hours={hours} initial={initial} attestationInfo={attestationInfo} />;
+  return (
+    <ReportClient key={`${address}-${hours}`} address={address} hours={hours} initial={initial} attestationInfo={attestationInfo} examples={examples} />
+  );
 }

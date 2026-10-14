@@ -1,152 +1,151 @@
 .page {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-4);
   min-inline-size: 0;
 }
 
-/* Header row: what was scanned on the left, how (window, refresh) on the right. */
+/* Verdict first, then the address that resolves from hex, then the window and refresh controls. */
 .header {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "verdict verdict"
+    "ident tools";
+  gap: var(--space-3) var(--space-6);
   align-items: end;
-  justify-content: space-between;
-  gap: var(--space-6);
-  padding-block-end: var(--space-5);
-  border-block-end: 1px solid var(--text);
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--divider);
+}
+
+.verdict {
+  grid-area: verdict;
+  max-inline-size: 46ch;
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-3xl);
+  letter-spacing: var(--tracking-3xl);
+  font-weight: 600;
+  text-wrap: balance;
 }
 
 .ident {
+  grid-area: ident;
   display: grid;
   gap: var(--space-2);
   min-inline-size: 0;
-  flex: 1 1 32ch;
 }
 
 .address {
   font-family: var(--font-mono);
-  font-size: var(--text-xl);
-  line-height: var(--leading-xl);
-  letter-spacing: 0;
+  font-size: var(--text-lg);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--accent-text);
   overflow-wrap: anywhere;
-  text-wrap: wrap;
 }
 
 .identActions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
 }
 
 .explorer {
-  font-weight: 600;
+  font-size: var(--text-sm);
 }
 
 .tools {
+  grid-area: tools;
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
-  gap: var(--space-4);
+  align-items: center;
+  justify-content: end;
+  gap: var(--space-3);
 }
 
-.refresh {
-  display: grid;
-  gap: var(--space-1);
-  justify-items: start;
-}
-
-.refreshButton {
-  min-inline-size: 12ch;
-}
-
-/* Phones: receipt, table, panels in flow. Desktop: receipt beside the data. Wide: three zones, receipt | table | panels. */
+/* Main column for the chart and table, side column for the receipt and proof tabs. */
 .body {
   display: grid;
-  gap: var(--space-10);
-  min-inline-size: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  gap: var(--space-4);
+  align-items: start;
 }
 
-.receiptCol,
-.tableCol,
-.panelCol {
+.main,
+.side {
   display: grid;
-  align-content: start;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-inline-size: 0;
 }
 
-.fig {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  display: flex;
-  gap: var(--space-3);
-}
-
-.proof {
-  display: grid;
-  gap: var(--space-3);
-  min-inline-size: 0;
-}
-
-@media (min-width: 64em) {
-  .body {
-    grid-template-columns: minmax(34ch, 4fr) minmax(0, 7fr);
-    align-items: start;
-    gap: var(--space-10) var(--space-8);
-  }
-
-  .receiptCol {
-    grid-row: span 2;
+/* The receipt stays beside the table while the reader scrolls the functions (below the sticky app bar). */
+@media (width >= 64rem) {
+  .side {
     position: sticky;
-    inset-block-start: var(--space-4);
-  }
-
-  .panelCol {
-    grid-column: 2;
-  }
-}
-
-@media (min-width: 90em) {
-  .body {
-    grid-template-columns: minmax(32ch, 3fr) minmax(0, 6.5fr) minmax(30ch, 3fr);
-  }
-
-  .receiptCol {
-    grid-row: auto;
-  }
-
-  .panelCol {
-    grid-column: 3;
-    position: sticky;
-    inset-block-start: var(--space-4);
+    inset-block-start: var(--space-16);
   }
 }
 
 .error {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  max-inline-size: var(--measure);
-  padding: var(--space-6);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-block-start: 3px solid var(--danger);
+  gap: var(--space-4);
+  max-inline-size: 48rem;
 }
 
 .errorTitle {
-  font-size: var(--text-xl);
-  line-height: var(--leading-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
 }
 
 .errorText {
   max-inline-size: var(--measure);
 }
 
+.countdown {
+  font-size: var(--text-sm);
+  color: var(--warning);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-block-start: var(--space-2);
+}
+
+.examples {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@media (width < 64rem) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "verdict"
+      "ident"
+      "tools";
+    align-items: start;
+  }
+
+  .tools {
+    justify-content: start;
+  }
+}
+
+@media (width < 36rem) {
+  .verdict {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-2xl);
+  }
+
+  .address {
+    font-size: var(--text-sm);
+  }
 }

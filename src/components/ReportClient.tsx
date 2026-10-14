@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ApiError, AttestationInfo, ReportPayload } from "@/lib/api";
 import { explorerAddress } from "@/lib/format";
@@ -9,13 +8,20 @@ import { AttestPanel } from "./AttestPanel";
 import { BadgePanel } from "./BadgePanel";
 import { Button } from "./Button";
 import { CopyButton } from "./CopyButton";
+import { CostChart, CostChartSkeleton } from "./CostChart";
 import { CostTable } from "./CostTable";
+import type { ScanExample } from "./examples";
+import { KpiStrip } from "./KpiStrip";
+import { advanceStages, isProgressStep, type StageState } from "./pipelineStages";
 import { Receipt } from "./Receipt";
 import styles from "./ReportClient.module.css";
-import { CostTableSkeleton, isProgressStep, ReportProgress } from "./ReportProgress";
+import { ReportError } from "./ReportError";
+import { ReportProgress } from "./ReportProgress";
 import { utcStamp } from "./receiptNotes";
+import { ScrambleText } from "./ScrambleText";
 import { Tabs } from "./Tabs";
 import ui from "./ui.module.css";
+import { verdictSentence } from "./verdictSentence";
 import { VerifyPanel } from "./VerifyPanel";
 import { WindowLinks } from "./WindowPicker";
 
@@ -24,27 +30,13 @@ type Props = {
   hours: WindowHours;
   initial: ReportPayload | null;
   attestationInfo: AttestationInfo | null;
+  examples: readonly ScanExample[];
 };
 
 type View =
   | { kind: "report"; payload: ReportPayload; fresh: boolean; stampFresh: boolean }
-  | { kind: "streaming"; steps: ProgressEvent[] }
-  | { kind: "error"; error: ApiError };
-
-const ERROR_MESSAGES: Partial<Record<ApiError["code"], string>> = {
-  NOT_A_CONTRACT: "There is no contract code at this address on Arc mainnet. Check the address, or scan another one.",
-  INVALID_ADDRESS: "That is not a valid Arc address.",
-  INVALID_WINDOW: "That window is not supported. Choose 1 h, 24 h or 7 d.",
-  RPC_UNAVAILABLE: "Arc RPC did not answer in time. Try again in a minute.",
-};
-
-function errorText(error: ApiError): string {
-  if (error.code === "RATE_LIMITED") {
-    const wait = error.retryAfterSeconds ? ` Try again in ${error.retryAfterSeconds} s.` : "";
-    return `${error.message}${wait}`;
-  }
-  return ERROR_MESSAGES[error.code] ?? error.message;
-}
+  | { kind: "streaming"; stages: StageState[]; startedAt: number | null }
+  | { kind: "error"; error: ApiError; at: number };
 
 function isApiError(value: unknown): value is ApiError {
   return typeof value === "object" && value !== null && typeof (value as ApiError).code === "string" && typeof (value as ApiError).message === "string";
@@ -75,19 +67,45 @@ function parseData(event: MessageEvent<string>): unknown {
 const CONNECTION_LOST: ApiError = { code: "INTERNAL", message: "The connection to the server dropped before the report finished. Retry to start again." };
 const BAD_DATA: ApiError = { code: "INTERNAL", message: "The server sent a report this page could not read. Retry to build it again." };
 
-/** Replaces the entry for a step, keeping first-seen order. */
-function upsertStep(steps: ProgressEvent[], next: ProgressEvent): ProgressEvent[] {
-  return steps.some((s) => s.step === next.step) ? steps.map((s) => (s.step === next.step ? next : s)) : [...steps, next];
+/** Reads "#fn-…" from the URL so a shared row link lands on its row. */
+function hashAnchor(): string | null {
+  const hash = window.location.hash.slice(1);
+  return /^fn-[A-Za-z0-9]+$/.test(hash) ? hash : null;
 }
 
-function ReportHeader({ address, hours, busy, onRefresh, savedAt }: { address: string; hours: WindowHours; busy: boolean; onRefresh: () => void; savedAt: string | null }) {
+/** Scrolls a cost-table row into view and moves focus to it, so keyboard readers land where the chart sent them. */
+function revealRow(anchor: string, smooth: boolean): void {
+  const row = document.getElementById(anchor);
+  if (!row) return;
+  row.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
+  row.focus({ preventScroll: true });
+}
+
+type HeaderProps = {
+  address: string;
+  hours: WindowHours;
+  busy: boolean;
+  onRefresh: () => void;
+  payload: ReportPayload | null;
+  fresh: boolean;
+  errorCode: ApiError["code"] | null;
+};
+
+function ReportHeader({ address, hours, busy, onRefresh, payload, fresh, errorCode }: HeaderProps) {
+  const sentence = payload
+    ? verdictSentence(payload.report)
+    : busy
+      ? "Building a fresh report from real Arc receipts."
+      : errorCode === "NOT_A_CONTRACT"
+        ? "This address holds no contract code on Arc mainnet."
+        : "No report to show for this window.";
   return (
     <header className={styles.header}>
+      <p className={styles.verdict}>{sentence}</p>
       <div className={styles.ident}>
-        <p className={ui.caption}>Contract on Arc mainnet</p>
         <h1 className={styles.address}>
           <span className="visually-hidden">Report for </span>
-          {address}
+          <ScrambleText value={address} active={fresh} />
         </h1>
         <div className={styles.identActions}>
           <a className={styles.explorer} href={explorerAddress(address)} target="_blank" rel="noopener noreferrer">
@@ -99,56 +117,35 @@ function ReportHeader({ address, hours, busy, onRefresh, savedAt }: { address: s
       </div>
       <div className={styles.tools}>
         <WindowLinks address={address} value={hours} />
-        <div className={styles.refresh}>
-          <Button variant="secondary" onClick={onRefresh} disabled={busy} className={styles.refreshButton}>
-            {busy ? "Scanning…" : "Refresh"}
-          </Button>
-          {savedAt && (
-            <p className={ui.caption}>
-              Saved <time dateTime={savedAt}>{utcStamp(savedAt, 16)}</time>
-            </p>
-          )}
-        </div>
+        <Button variant="secondary" onClick={onRefresh} disabled={busy}>
+          {busy ? "Scanning…" : "Refresh"}
+        </Button>
+        {payload && (
+          <p className={ui.label}>
+            Saved <time dateTime={payload.createdAt}>{utcStamp(payload.createdAt, 16)}</time>
+          </p>
+        )}
       </div>
     </header>
   );
 }
 
-function ErrorState({ error, onRetry, onBack }: { error: ApiError; onRetry: () => void; onBack: (() => void) | null }) {
-  const notContract = error.code === "NOT_A_CONTRACT";
-  return (
-    <section className={styles.error} role="alert" aria-labelledby="report-error-title">
-      <h2 id="report-error-title" className={styles.errorTitle}>
-        <span className={ui.fail} aria-hidden="true">
-          ✕
-        </span>{" "}
-        {notContract ? "Not a contract on Arc mainnet" : "Report failed"}
-      </h2>
-      <p className={styles.errorText}>{errorText(error)}</p>
-      <div className={styles.actions}>
-        <Button onClick={onRetry}>Retry</Button>
-        {onBack && (
-          <Button variant="secondary" onClick={onBack}>
-            Back to the saved report
-          </Button>
-        )}
-        <Link className={`${ui.button} ${ui.ghost}`} href="/app">
-          Scan another address
-        </Link>
-      </div>
-    </section>
+export function ReportClient({ address, hours, initial, attestationInfo, examples }: Props) {
+  const [view, setView] = useState<View>(
+    initial ? { kind: "report", payload: initial, fresh: false, stampFresh: false } : { kind: "streaming", stages: [], startedAt: null },
   );
-}
-
-export function ReportClient({ address, hours, initial, attestationInfo }: Props) {
-  const [view, setView] = useState<View>(initial ? { kind: "report", payload: initial, fresh: false, stampFresh: false } : { kind: "streaming", steps: [] });
   // Bumped by Refresh and Retry to open a new stream.
   const [attempt, setAttempt] = useState(0);
+  const [highlight, setHighlight] = useState<string | null>(null);
   const isStreaming = view.kind === "streaming";
+  const hasReport = view.kind === "report";
 
   useEffect(() => {
     if (!isStreaming) return;
     const source = new EventSource(`/api/report/${address}/stream?hours=${hours}`);
+    const openedAt = Date.now();
+    // Each stage is timed from the event before it: the server reports a stage after working on it.
+    let lastEventAt = openedAt;
     // EventSource reconnects on its own after an error; every terminal state closes it explicitly.
     const finish = (next: View) => {
       source.close();
@@ -156,22 +153,45 @@ export function ReportClient({ address, hours, initial, attestationInfo }: Props
     };
     source.addEventListener("progress", (event) => {
       const data = parseData(event as MessageEvent<string>);
-      if (isProgress(data)) setView((v) => (v.kind === "streaming" ? { kind: "streaming", steps: upsertStep(v.steps, data) } : v));
+      if (!isProgress(data)) return;
+      const now = Date.now();
+      const since = lastEventAt;
+      lastEventAt = now;
+      setView((v) =>
+        v.kind === "streaming" ? { kind: "streaming", stages: advanceStages(v.stages, data, now, since), startedAt: v.startedAt ?? openedAt } : v,
+      );
     });
     source.addEventListener("done", (event) => {
       const payload = parsePayload(parseData(event as MessageEvent<string>));
-      finish(payload ? { kind: "report", payload, fresh: true, stampFresh: false } : { kind: "error", error: BAD_DATA });
+      finish(payload ? { kind: "report", payload, fresh: true, stampFresh: false } : { kind: "error", error: BAD_DATA, at: Date.now() });
     });
     source.addEventListener("error", (event) => {
       // A server "error" event carries data; a bare Event means the connection itself failed.
       const data = event instanceof MessageEvent ? parseData(event as MessageEvent<string>) : null;
-      finish({ kind: "error", error: isApiError(data) ? data : CONNECTION_LOST });
+      finish({ kind: "error", error: isApiError(data) ? data : CONNECTION_LOST, at: Date.now() });
     });
     return () => source.close();
   }, [address, hours, attempt, isStreaming]);
 
+  // Deep links: "#fn-…" on load or a later hash change scrolls to and marks that row once the table exists.
+  useEffect(() => {
+    if (!hasReport) return;
+    function follow() {
+      const anchor = hashAnchor();
+      if (!anchor) return;
+      // Wait a frame so the table row is in the DOM after the report view renders.
+      requestAnimationFrame(() => {
+        setHighlight(anchor);
+        revealRow(anchor, false);
+      });
+    }
+    follow();
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, [hasReport]);
+
   function restart() {
-    setView({ kind: "streaming", steps: [] });
+    setView({ kind: "streaming", stages: [], startedAt: null });
     setAttempt((n) => n + 1);
   }
 
@@ -179,19 +199,36 @@ export function ReportClient({ address, hours, initial, attestationInfo }: Props
     setView((v) => (v.kind === "report" ? { ...v, fresh: false, stampFresh: true, payload: { ...v.payload, attestation: record } } : v));
   }
 
-  const savedAt = view.kind === "report" ? view.payload.createdAt : null;
-  const header = <ReportHeader address={address} hours={hours} busy={isStreaming} onRefresh={restart} savedAt={savedAt} />;
+  function activateRow(anchor: string) {
+    setHighlight(anchor);
+    // replaceState keeps Back meaningful and makes the address bar a shareable link to this row.
+    window.history.replaceState(null, "", `#${anchor}`);
+    revealRow(anchor, !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  const payload = view.kind === "report" ? view.payload : null;
+  const header = (
+    <ReportHeader
+      address={address}
+      hours={hours}
+      busy={isStreaming}
+      onRefresh={restart}
+      payload={payload}
+      fresh={view.kind === "report" && view.fresh}
+      errorCode={view.kind === "error" ? view.error.code : null}
+    />
+  );
 
   if (view.kind === "streaming") {
     return (
       <div className={styles.page}>
         {header}
         <div className={styles.body}>
-          <div className={styles.receiptCol}>
-            <ReportProgress steps={view.steps} hours={hours} />
+          <div className={styles.main}>
+            <CostChartSkeleton />
           </div>
-          <div className={styles.tableCol}>
-            <CostTableSkeleton />
+          <div className={styles.side}>
+            <ReportProgress stages={view.stages} hours={hours} startedAt={view.startedAt} />
           </div>
         </div>
       </div>
@@ -202,44 +239,48 @@ export function ReportClient({ address, hours, initial, attestationInfo }: Props
     return (
       <div className={styles.page}>
         {header}
-        <ErrorState error={view.error} onRetry={restart} onBack={initial ? () => setView({ kind: "report", payload: initial, fresh: false, stampFresh: false }) : null} />
+        <ReportError
+          error={view.error}
+          at={view.at}
+          hours={hours}
+          examples={examples}
+          onRetry={restart}
+          onBack={initial ? () => setView({ kind: "report", payload: initial, fresh: false, stampFresh: false }) : null}
+        />
       </div>
     );
   }
 
-  const { payload, fresh, stampFresh } = view;
+  const { fresh, stampFresh } = view;
+  const report = view.payload.report;
   return (
     <div className={styles.page}>
       {header}
+      <KpiStrip report={report} fresh={fresh} />
       <div className={styles.body}>
-        <div className={styles.receiptCol}>
-          <p className={styles.fig}>
-            <span className={ui.figNo}>Fig. 1</span> The receipt
-          </p>
-          <Receipt payload={payload} shouldPrint={fresh} stampFresh={stampFresh} />
-        </div>
-        <div className={styles.tableCol}>
-          <CostTable report={payload.report} shouldPrint={fresh} />
-        </div>
-        <div className={styles.panelCol}>
-          <section className={styles.proof} aria-labelledby="proof-title">
-            <h2 id="proof-title" className={ui.figHeading}>
-              <span className={ui.figNo}>Fig. 3</span> Share and prove
-            </h2>
+        <div className={styles.main}>
+          <CostChart report={report} animate={fresh} activeAnchor={highlight} onActivate={activateRow} />
+          <CostTable report={report} shouldPrint={fresh} highlight={highlight} />
+          <section className={ui.panel} aria-labelledby="proof-title">
+            <div className={ui.panelHead}>
+              <h2 id="proof-title" className={ui.figHeading}>
+                <span className={ui.figNo}>05</span> Share and prove
+              </h2>
+            </div>
             <Tabs
               label="Share and prove"
               items={[
-                { key: "badge", label: "Badge", content: <BadgePanel address={address} /> },
+                { key: "badge", label: "Badge", content: <BadgePanel address={address} hours={hours} /> },
                 {
                   key: "attest",
                   label: "Attest",
                   content: (
                     <AttestPanel
-                      key={payload.reportHash}
+                      key={view.payload.reportHash}
                       address={address}
                       hours={hours}
                       info={attestationInfo}
-                      existing={payload.attestation}
+                      existing={view.payload.attestation}
                       onAttested={onAttested}
                     />
                   ),
@@ -247,15 +288,18 @@ export function ReportClient({ address, hours, initial, attestationInfo }: Props
                 {
                   key: "verify",
                   label: "Verify",
-                  content: <VerifyPanel key={`v-${payload.reportHash}`} report={payload.report} reportHash={payload.reportHash} info={attestationInfo} />,
+                  content: <VerifyPanel key={`v-${view.payload.reportHash}`} report={report} reportHash={view.payload.reportHash} info={attestationInfo} />,
                 },
               ]}
             />
           </section>
         </div>
+        <div className={styles.side}>
+          <Receipt payload={view.payload} shouldPrint={fresh} stampFresh={stampFresh} />
+        </div>
       </div>
       <p className="visually-hidden" role="status">
-        {stampFresh && payload.attestation ? `Attested on Arc in block ${payload.attestation.blockNumber}. The receipt is stamped.` : ""}
+        {stampFresh && view.payload.attestation ? `Attested on Arc in block ${view.payload.attestation.blockNumber}. The receipt is stamped.` : ""}
       </p>
     </div>
   );
