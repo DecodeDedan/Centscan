@@ -51,7 +51,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
             <img src="/brand/centscan-mark-dark.svg" alt="" width={24} height={24} />
             <p>
               Centscan is built on Arc. It is an independent tool, not an Arc or Circle product. The method, attestation protocol and
-              limits are written up in <code>docs/WHITEPAPER.md</code> and <code>docs/ARCHITECTURE.md</code> in the repository.
+              limits are written up in <code>docs/WHITEPAPER.md</code> and <code>docs/ARCHITECTURE.md</code> in the repository. Built by <a href="https://okwaretech.com" target="_blank" rel="noopener noreferrer">okwaretech.com</a>.
             </p>
           </div>
         </div>

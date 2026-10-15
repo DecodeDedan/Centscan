@@ -27,7 +27,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </main>
         <footer className={styles.footer}>
           <p className={styles.footerInner}>
-            Centscan prices Arc contracts from real transaction receipts, never estimates. Built on Arc; not an official Arc or Circle product.
+            Centscan prices Arc contracts from real transaction receipts, never estimates. Built on Arc; not an official Arc or Circle product. Built by <a href="https://okwaretech.com" target="_blank" rel="noopener noreferrer">okwaretech.com</a>.
           </p>
         </footer>
       </div>
