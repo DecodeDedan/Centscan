@@ -54,6 +54,14 @@ Paste any Arc contract. In about 30 seconds you get:
   - No owner, no upgrade path, holds no funds.
   - A newer report can't be overwritten by an older one.
 
+## Live attestations on Arc mainnet
+
+- **Arc USDC**: median 0.111¢, live. Attestation tx [`0x3033ac9eb9c951954a1a0f545e1b350ac7314257eabfa8407bc3c9aad269b4f8`](https://explorer.arc.io/tx/0x3033ac9eb9c951954a1a0f545e1b350ac7314257eabfa8407bc3c9aad269b4f8), block 26,008,120.
+- **Multicall3**: median 1.49¢, live. Attestation tx [`0x5160bb7f206e896a330ac4b6acbd4b47ba9389195d685252682e12fca741c37d`](https://explorer.arc.io/tx/0x5160bb7f206e896a330ac4b6acbd4b47ba9389195d685252682e12fca741c37d), block 26,008,125.
+- **Permit2**: median 0.0956¢, verified + live. Attestation tx [`0x332cb90b8bc14382e22291074f87a5ae5d071981a7089deb77483f41afc62e43`](https://explorer.arc.io/tx/0x332cb90b8bc14382e22291074f87a5ae5d071981a7089deb77483f41afc62e43), block 26,008,129.
+
+Attester `0xF05155A3D778101E55fEfA3c516A5789E81A28CB`. Each on-chain report hash was read back from the registry and matches the hash recomputed from the report JSON. The three attestations cost $0.0043 in total.
+
 ## Architecture
 
 ![Architecture](https://raw.githubusercontent.com/okwareddevnest/Centscan/main/docs/diagrams/architecture.png)
