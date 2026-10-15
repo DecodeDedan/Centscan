@@ -151,7 +151,6 @@ Requires Node 24 and pnpm 9. No configuration is needed: the public Arc endpoint
 ```bash
 pnpm install
 pnpm dev                                                    # site on :3000, scanner at /app
-pnpm report 0x3600000000000000000000000000000000000000 1    # one report from the CLI
 ```
 
 To enable attestations, set `REGISTRY_ADDRESS`, `ATTESTER_ADDRESS` and `ATTESTER_PRIVATE_KEY` in `.env.local` (see [.env.example](.env.example)).

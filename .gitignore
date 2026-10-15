@@ -30,3 +30,7 @@ contracts/broadcast/*/31337/
 .impeccable/hook.cache.json
 .DS_Store
 video/
+
+# local-only: agent instructions and helper scripts
+AGENTS.md
+scripts/
